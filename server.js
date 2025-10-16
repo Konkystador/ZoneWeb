@@ -1,20 +1,23 @@
-const express = require('express');
-const session = require('express-session');
-const bcrypt = require('bcryptjs');
-const sqlite3 = require('sqlite3').verbose();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { v4: uuidv4 } = require('uuid');
-const moment = require('moment');
+// Подключение необходимых модулей для работы сервера
+const express = require('express');           // Веб-фреймворк для Node.js
+const session = require('express-session');   // Управление сессиями пользователей
+const bcrypt = require('bcryptjs');           // Хеширование паролей для безопасности
+const sqlite3 = require('sqlite3').verbose(); // База данных SQLite
+const multer = require('multer');             // Обработка загрузки файлов
+const path = require('path');                 // Работа с путями файлов
+const fs = require('fs');                     // Работа с файловой системой
+const cors = require('cors');                 // Cross-Origin Resource Sharing
+const helmet = require('helmet');             // Безопасность HTTP заголовков
+const rateLimit = require('express-rate-limit'); // Ограничение частоты запросов
+const { v4: uuidv4 } = require('uuid');       // Генерация уникальных идентификаторов
+const moment = require('moment');             // Работа с датами и временем
 
+// Создание экземпляра Express приложения
 const app = express();
+// Порт для запуска сервера (по умолчанию 3000)
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Настройка middleware (промежуточного ПО)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {

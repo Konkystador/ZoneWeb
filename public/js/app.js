@@ -1,93 +1,124 @@
-// Основной JavaScript файл приложения
+/**
+ * Основной класс приложения для управления заказами по ремонту окон
+ * Содержит всю логику работы с заказами, сметами, пользователями и настройками
+ */
 class WindowRepairApp {
+    /**
+     * Конструктор класса - инициализация приложения
+     * Создает пустые массивы для хранения данных и запускает инициализацию
+     */
     constructor() {
-        this.currentUser = null;
-        this.orders = [];
-        this.estimates = [];
-        this.users = [];
-        this.settings = {};
+        this.currentUser = null;        // Текущий авторизованный пользователь
+        this.orders = [];              // Массив всех заказов
+        this.estimates = [];           // Массив всех смет
+        this.users = [];               // Массив всех пользователей системы
+        this.settings = {};            // Настройки системы
+        this.services = [];            // Массив услуг и цен
+        this.serviceProfiles = [];     // Массив профилей систем
         
-        this.init();
+        this.init(); // Запуск инициализации приложения
     }
 
+    /**
+     * Инициализация приложения
+     * Настраивает обработчики событий и проверяет авторизацию пользователя
+     */
     init() {
-        this.setupEventListeners();
-        this.checkAuth();
+        this.setupEventListeners(); // Настройка всех обработчиков событий
+        this.checkAuth();           // Проверка авторизации пользователя
     }
 
+    /**
+     * Настройка всех обработчиков событий в приложении
+     * Привязывает функции к кнопкам и формам на странице
+     */
     setupEventListeners() {
-        // Форма входа
+        // Обработчик формы входа в систему
         document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.login();
+            e.preventDefault(); // Предотвращаем стандартную отправку формы
+            this.login();       // Вызываем метод входа
         });
 
-        // Кнопка выхода
+        // Обработчик кнопки выхода из системы
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            this.logout();
+            this.logout(); // Вызываем метод выхода
         });
 
-        // Навигация
+        // Обработчики навигационных ссылок
         document.querySelectorAll('[data-page]').forEach(link => {
             link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = e.target.getAttribute('data-page');
-                this.showPage(page);
+                e.preventDefault(); // Предотвращаем переход по ссылке
+                const page = e.target.getAttribute('data-page'); // Получаем название страницы
+                this.showPage(page); // Показываем выбранную страницу
             });
         });
 
-        // Сохранение заказа
+        // Обработчик кнопки сохранения заказа
         document.getElementById('saveOrderBtn').addEventListener('click', () => {
-            this.saveOrder();
+            this.saveOrder(); // Вызываем метод сохранения заказа
         });
 
-        // Сохранение пользователя
+        // Обработчик кнопки сохранения пользователя
         document.getElementById('saveUserBtn').addEventListener('click', () => {
-            this.saveUser();
+            this.saveUser(); // Вызываем метод сохранения пользователя
         });
 
-        // Сохранение настроек
+        // Обработчик формы настроек системы
         document.getElementById('settingsForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveSettings();
+            e.preventDefault(); // Предотвращаем стандартную отправку формы
+            this.saveSettings(); // Вызываем метод сохранения настроек
         });
 
-        // Сохранение услуги
+        // Обработчик кнопки сохранения услуги
         document.getElementById('saveServiceBtn').addEventListener('click', () => {
-            this.saveService();
+            this.saveService(); // Вызываем метод сохранения услуги
         });
 
-        // Сохранение профиля
+        // Обработчик кнопки сохранения профиля системы
         document.getElementById('saveProfileBtn').addEventListener('click', () => {
-            this.saveProfile();
+            this.saveProfile(); // Вызываем метод сохранения профиля
         });
     }
 
+    /**
+     * Проверка авторизации пользователя при загрузке страницы
+     * Отправляет запрос на сервер для проверки текущей сессии
+     */
     async checkAuth() {
         try {
+            // Отправляем запрос на сервер для получения информации о текущем пользователе
             const response = await fetch('/api/user');
+            
             if (response.ok) {
+                // Если пользователь авторизован, получаем его данные
                 const user = await response.json();
-                this.currentUser = user;
-                this.showMainApp();
-                this.loadDashboardData();
+                this.currentUser = user; // Сохраняем данные пользователя
+                this.showMainApp();      // Показываем основное приложение
+                this.loadDashboardData(); // Загружаем данные дашборда
             } else {
+                // Если пользователь не авторизован, показываем форму входа
                 this.showLoginScreen();
             }
         } catch (error) {
             console.error('Ошибка проверки авторизации:', error);
-            this.showLoginScreen();
+            this.showLoginScreen(); // При ошибке показываем форму входа
         }
     }
 
+    /**
+     * Авторизация пользователя в системе
+     * Отправляет логин и пароль на сервер для проверки
+     */
     async login() {
+        // Получаем данные из формы входа
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
-        const errorDiv = document.getElementById('loginError');
+        const errorDiv = document.getElementById('loginError'); // Элемент для отображения ошибок
 
         console.log('Попытка входа:', { username, password });
 
         try {
+            // Отправляем запрос на сервер для авторизации
             const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
@@ -98,21 +129,25 @@ class WindowRepairApp {
 
             console.log('Ответ сервера:', response.status, response.statusText);
 
+            // Получаем ответ от сервера
             const data = await response.json();
             console.log('Данные ответа:', data);
 
             if (response.ok) {
+                // Если авторизация успешна, сохраняем данные пользователя
                 this.currentUser = data.user;
                 console.log('Пользователь авторизован:', this.currentUser);
-                this.showMainApp();
-                this.loadDashboardData();
-                errorDiv.style.display = 'none';
+                this.showMainApp();      // Показываем основное приложение
+                this.loadDashboardData(); // Загружаем данные дашборда
+                errorDiv.style.display = 'none'; // Скрываем сообщение об ошибке
             } else {
+                // Если авторизация не удалась, показываем ошибку
                 console.error('Ошибка авторизации:', data);
                 errorDiv.textContent = data.error || 'Ошибка входа';
-                errorDiv.style.display = 'block';
+                errorDiv.style.display = 'block'; // Показываем сообщение об ошибке
             }
         } catch (error) {
+            // При ошибке соединения показываем соответствующее сообщение
             console.error('Ошибка входа:', error);
             errorDiv.textContent = 'Ошибка соединения с сервером';
             errorDiv.style.display = 'block';
@@ -216,16 +251,26 @@ class WindowRepairApp {
         }
     }
 
+    /**
+     * Загрузка списка заказов с сервера
+     * Получает все заказы и отображает их в интерфейсе
+     */
     async loadOrders() {
         try {
+            // Отправляем запрос на сервер для получения списка заказов
             const response = await fetch('/api/orders');
+            
             if (response.ok) {
+                // Если запрос успешен, получаем данные заказов
                 const orders = await response.json();
-                this.orders = orders;
-                this.renderOrdersTable(orders);
+                this.orders = orders; // Сохраняем заказы в свойстве класса
+                this.renderOrderCards(orders); // Отображаем заказы в виде карточек
+            } else {
+                console.error('Ошибка загрузки заказов:', response.status);
             }
         } catch (error) {
             console.error('Ошибка загрузки заказов:', error);
+            this.showAlert('Ошибка загрузки заказов', 'danger');
         }
     }
 
@@ -379,7 +424,11 @@ class WindowRepairApp {
         }
     }
 
+    // Сохранение нового заказа
     async saveOrder() {
+        console.log('Начинаем сохранение заказа...');
+        
+        // Собираем данные из формы
         const formData = {
             client_name: document.getElementById('clientName').value,
             client_phone: document.getElementById('clientPhone').value,
@@ -397,7 +446,16 @@ class WindowRepairApp {
             assigned_to: document.getElementById('assignedTo').value || null
         };
 
+        console.log('Данные для отправки:', formData);
+
+        // Проверяем обязательные поля
+        if (!formData.client_name || !formData.client_phone) {
+            this.showAlert('Заполните обязательные поля: имя клиента и телефон', 'warning');
+            return;
+        }
+
         try {
+            // Отправляем запрос на сервер
             const response = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {
@@ -406,19 +464,52 @@ class WindowRepairApp {
                 body: JSON.stringify(formData)
             });
 
+            console.log('Ответ сервера:', response.status, response.statusText);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('Заказ создан:', data);
+                
+                // Создаем карточку заказа
+                await this.createOrderCard(data.id);
+                
                 this.showAlert('Заказ успешно создан!', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('newOrderModal')).hide();
                 document.getElementById('newOrderForm').reset();
                 this.loadOrders();
             } else {
                 const error = await response.json();
+                console.error('Ошибка создания заказа:', error);
                 this.showAlert(error.error || 'Ошибка создания заказа', 'danger');
             }
         } catch (error) {
             console.error('Ошибка сохранения заказа:', error);
             this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    // Создание карточки заказа после создания заказа
+    async createOrderCard(orderId) {
+        try {
+            const response = await fetch('/api/order-cards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    order_id: orderId,
+                    card_type: 'measurement',
+                    status: 'pending'
+                })
+            });
+
+            if (response.ok) {
+                console.log('Карточка заказа создана для заказа:', orderId);
+            } else {
+                console.error('Ошибка создания карточки заказа');
+            }
+        } catch (error) {
+            console.error('Ошибка создания карточки заказа:', error);
         }
     }
 
@@ -656,31 +747,49 @@ class WindowRepairApp {
         }
     }
 
+    /**
+     * Отображение заказов в виде карточек
+     * Очищает контейнер и создает HTML для каждой карточки заказа
+     * @param {Array} cards - Массив заказов для отображения
+     */
     renderOrderCards(cards) {
+        // Получаем контейнер для карточек заказов
         const container = document.getElementById('orderCardsContainer');
-        container.innerHTML = '';
+        container.innerHTML = ''; // Очищаем контейнер
 
+        // Создаем HTML для каждой карточки заказа
         cards.forEach(card => {
-            const cardHtml = this.createOrderCardHtml(card);
-            container.insertAdjacentHTML('beforeend', cardHtml);
+            const cardHtml = this.createOrderCardHtml(card); // Создаем HTML карточки
+            container.insertAdjacentHTML('beforeend', cardHtml); // Добавляем в контейнер
         });
     }
 
+    /**
+     * Создание HTML-кода для карточки заказа
+     * Генерирует Bootstrap-карточку с информацией о заказе и кнопками действий
+     * @param {Object} card - Объект заказа с данными
+     * @returns {string} HTML-код карточки
+     */
     createOrderCardHtml(card) {
+        // Цвета для статусов заказов
         const statusColors = {
-            'pending': 'warning',
-            'in_progress': 'info',
-            'completed': 'success',
-            'cancelled': 'danger'
+            'pending': 'warning',      // Ожидает - желтый
+            'in_progress': 'info',     // В работе - синий
+            'completed': 'success',    // Завершен - зеленый
+            'cancelled': 'danger'      // Отменен - красный
         };
 
+        // Возвращаем HTML-код карточки заказа
         return `
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="card h-100">
+                    <!-- Заголовок карточки с номером заказа и статусом -->
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">${card.order_number}</h6>
                         <span class="badge bg-${statusColors[card.status] || 'secondary'}">${this.getStatusText(card.status)}</span>
                     </div>
+                    
+                    <!-- Основное содержимое карточки -->
                     <div class="card-body">
                         <h6 class="card-title">${card.client_name}</h6>
                         <p class="card-text">
@@ -691,15 +800,17 @@ class WindowRepairApp {
                         </p>
                         <p class="card-text"><small class="text-muted">${card.problem_description || 'Описание не указано'}</small></p>
                     </div>
+                    
+                    <!-- Подвал карточки с кнопками действий -->
                     <div class="card-footer">
                         <div class="btn-group w-100" role="group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="app.viewOrderCard(${card.id})">
+                            <button class="btn btn-sm btn-outline-primary" onclick="app.viewOrderCard(${card.id})" title="Просмотр">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="app.startWork(${card.id})">
+                            <button class="btn btn-sm btn-outline-success" onclick="app.startWork(${card.id})" title="Начать работу">
                                 <i class="fas fa-play"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="app.cancelOrder(${card.id})">
+                            <button class="btn btn-sm btn-outline-danger" onclick="app.cancelOrder(${card.id})" title="Отменить">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
