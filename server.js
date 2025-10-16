@@ -447,6 +447,26 @@ app.post('/api/orders', requireAuth, (req, res) => {
   });
 });
 
+// Get order by ID
+app.get('/api/orders/:id', requireAuth, (req, res) => {
+  const orderId = req.params.id;
+  
+  db.get('SELECT * FROM orders WHERE id = ?', [orderId], (err, order) => {
+    if (err) {
+      console.error('Ошибка получения заказа:', err);
+      return res.status(500).json({ error: 'Ошибка получения заказа' });
+    }
+    
+    if (!order) {
+      console.log('Заказ не найден:', orderId);
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+    
+    console.log('Заказ найден:', order);
+    res.json(order);
+  });
+});
+
 // Update order status
 app.put('/api/orders/:id', requireAuth, (req, res) => {
   const orderId = req.params.id;
