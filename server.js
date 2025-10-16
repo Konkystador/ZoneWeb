@@ -167,6 +167,63 @@ db.serialize(() => {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // Services table
+  db.run(`CREATE TABLE IF NOT EXISTS services (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    unit_type TEXT NOT NULL,
+    base_price REAL NOT NULL,
+    calculation_type TEXT DEFAULT 'fixed',
+    formula TEXT,
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // Service profiles table
+  db.run(`CREATE TABLE IF NOT EXISTS service_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_type TEXT NOT NULL,
+    system_type TEXT NOT NULL,
+    sash_type TEXT,
+    complexity_coefficient REAL DEFAULT 1.0,
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // Order statuses table
+  db.run(`CREATE TABLE IF NOT EXISTS order_statuses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL,
+    color TEXT DEFAULT '#6c757d',
+    is_active BOOLEAN DEFAULT 1
+  )`);
+
+  // Order cards table (расширенная информация о заказах)
+  db.run(`CREATE TABLE IF NOT EXISTS order_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    card_type TEXT DEFAULT 'measurement',
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+  )`);
+
+  // Sash information table
+  db.run(`CREATE TABLE IF NOT EXISTS sash_info (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_card_id INTEGER NOT NULL,
+    sash_number INTEGER NOT NULL,
+    profile_type TEXT,
+    system_type TEXT,
+    sash_type TEXT,
+    dimensions TEXT,
+    notes TEXT,
+    photos TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_card_id) REFERENCES order_cards(id)
+  )`);
+
   // Insert default admin user
   const adminPassword = bcrypt.hashSync('admin123', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password, role, full_name) 
@@ -185,6 +242,37 @@ db.serialize(() => {
           ('currency', 'RUB'),
           ('tax_system', 'AUSN'),
           ('rounding', 'up')`);
+
+  // Insert default services
+  db.run(`INSERT OR IGNORE INTO services (name, category, unit_type, base_price, calculation_type) VALUES 
+          ('Москитная сетка стандартная', 'mosquito', 'шт', 1500, 'fixed'),
+          ('Москитная сетка антикошка', 'mosquito', 'шт', 2500, 'fixed'),
+          ('Рулонная штора стандартная', 'blinds', 'шт', 3000, 'fixed'),
+          ('Рулонная штора блэкаут', 'blinds', 'шт', 4000, 'fixed'),
+          ('Замена уплотнителя', 'repair', 'м.п.', 150, 'linear'),
+          ('Регулировка фурнитуры', 'repair', 'шт', 800, 'fixed'),
+          ('Замена стеклопакета', 'repair', 'шт', 5000, 'fixed'),
+          ('Ремонт рамы', 'repair', 'м²', 2000, 'area')`);
+
+  // Insert default service profiles
+  db.run(`INSERT OR IGNORE INTO service_profiles (profile_type, system_type, sash_type, complexity_coefficient) VALUES 
+          ('plastic', 'Rehau', 'поворотная', 1.0),
+          ('plastic', 'Rehau', 'поворотно-откидная', 1.2),
+          ('plastic', 'Rehau', 'откидная', 0.8),
+          ('plastic', 'Veka', 'поворотная', 1.0),
+          ('plastic', 'Veka', 'поворотно-откидная', 1.2),
+          ('wood', 'Стандарт', 'поворотная', 1.5),
+          ('wood', 'Стандарт', 'поворотно-откидная', 1.8),
+          ('aluminum', 'Стандарт', 'поворотная', 1.3),
+          ('aluminum', 'Стандарт', 'поворотно-откидная', 1.5)`);
+
+  // Insert default order statuses
+  db.run(`INSERT OR IGNORE INTO order_statuses (name, color) VALUES 
+          ('Ожидает', '#ffc107'),
+          ('В работе', '#17a2b8'),
+          ('Завершен', '#28a745'),
+          ('Отменен', '#dc3545'),
+          ('Отказ', '#6c757d')`);
 });
 
 // Authentication middleware
@@ -504,6 +592,154 @@ app.get('/api/users/assignable', requireAuth, (req, res) => {
       return res.status(500).json({ error: 'Ошибка получения пользователей' });
     }
     res.json(users);
+  });
+});
+
+// Services routes
+app.get('/api/services', requireAuth, (req, res) => {
+  const { category } = req.query;
+  let query = 'SELECT * FROM services WHERE is_active = 1';
+  let params = [];
+  
+  if (category) {
+    query += ' AND category = ?';
+    params.push(category);
+  }
+  
+  query += ' ORDER BY category, name';
+  
+  db.all(query, params, (err, services) => {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка получения услуг' });
+    }
+    res.json(services);
+  });
+});
+
+app.post('/api/services', requireAuth, requireRole(['admin']), (req, res) => {
+  const { name, category, unit_type, base_price, calculation_type, formula } = req.body;
+  
+  db.run(`INSERT INTO services (name, category, unit_type, base_price, calculation_type, formula) 
+          VALUES (?, ?, ?, ?, ?, ?)`,
+  [name, category, unit_type, base_price, calculation_type, formula],
+  function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка создания услуги' });
+    }
+    res.json({ id: this.lastID, name });
+  });
+});
+
+app.put('/api/services/:id', requireAuth, requireRole(['admin']), (req, res) => {
+  const serviceId = req.params.id;
+  const { name, category, unit_type, base_price, calculation_type, formula, is_active } = req.body;
+  
+  db.run(`UPDATE services SET name = ?, category = ?, unit_type = ?, base_price = ?, 
+          calculation_type = ?, formula = ?, is_active = ? WHERE id = ?`,
+  [name, category, unit_type, base_price, calculation_type, formula, is_active, serviceId],
+  function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка обновления услуги' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// Service profiles routes
+app.get('/api/service-profiles', requireAuth, (req, res) => {
+  const { profile_type } = req.query;
+  let query = 'SELECT * FROM service_profiles WHERE is_active = 1';
+  let params = [];
+  
+  if (profile_type) {
+    query += ' AND profile_type = ?';
+    params.push(profile_type);
+  }
+  
+  query += ' ORDER BY profile_type, system_type';
+  
+  db.all(query, params, (err, profiles) => {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка получения профилей' });
+    }
+    res.json(profiles);
+  });
+});
+
+app.post('/api/service-profiles', requireAuth, requireRole(['admin']), (req, res) => {
+  const { profile_type, system_type, sash_type, complexity_coefficient } = req.body;
+  
+  db.run(`INSERT INTO service_profiles (profile_type, system_type, sash_type, complexity_coefficient) 
+          VALUES (?, ?, ?, ?)`,
+  [profile_type, system_type, sash_type, complexity_coefficient],
+  function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка создания профиля' });
+    }
+    res.json({ id: this.lastID });
+  });
+});
+
+// Order cards routes
+app.get('/api/order-cards', requireAuth, (req, res) => {
+  const { status } = req.query;
+  let query = `SELECT oc.*, o.*, u.full_name as assigned_name 
+               FROM order_cards oc 
+               JOIN orders o ON oc.order_id = o.id 
+               LEFT JOIN users u ON o.assigned_to = u.id`;
+  let params = [];
+  
+  if (status) {
+    query += ' WHERE oc.status = ?';
+    params.push(status);
+  }
+  
+  query += ' ORDER BY oc.created_at DESC';
+  
+  db.all(query, params, (err, cards) => {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка получения карточек заказов' });
+    }
+    res.json(cards);
+  });
+});
+
+app.post('/api/order-cards', requireAuth, (req, res) => {
+  const { order_id, card_type, status } = req.body;
+  
+  db.run(`INSERT INTO order_cards (order_id, card_type, status) VALUES (?, ?, ?)`,
+  [order_id, card_type, status || 'pending'],
+  function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка создания карточки заказа' });
+    }
+    res.json({ id: this.lastID });
+  });
+});
+
+// Sash info routes
+app.get('/api/sash-info/:orderCardId', requireAuth, (req, res) => {
+  const orderCardId = req.params.orderCardId;
+  
+  db.all('SELECT * FROM sash_info WHERE order_card_id = ? ORDER BY sash_number', [orderCardId], (err, sashInfo) => {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка получения информации о створках' });
+    }
+    res.json(sashInfo);
+  });
+});
+
+app.post('/api/sash-info', requireAuth, (req, res) => {
+  const { order_card_id, sash_number, profile_type, system_type, sash_type, dimensions, notes, photos } = req.body;
+  
+  db.run(`INSERT INTO sash_info (order_card_id, sash_number, profile_type, system_type, sash_type, dimensions, notes, photos) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  [order_card_id, sash_number, profile_type, system_type, sash_type, dimensions, notes, photos],
+  function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка сохранения информации о створке' });
+    }
+    res.json({ id: this.lastID });
   });
 });
 

@@ -138,12 +138,51 @@
                 <div class="row mb-3">
                     <div class="col-12">
                         <h2><i class="fas fa-clipboard-list"></i> Управление заказами</h2>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newOrderModal">
-                            <i class="fas fa-plus"></i> Новый заказ
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newOrderModal">
+                                <i class="fas fa-plus"></i> Новый заказ
+                            </button>
+                            <button class="btn btn-success" onclick="app.showOrderCards('pending')">
+                                <i class="fas fa-clock"></i> Предстоящие заказы
+                            </button>
+                            <button class="btn btn-info" onclick="app.showOrderCards('in_progress')">
+                                <i class="fas fa-tools"></i> В работе
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Фильтры -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">Все статусы</option>
+                            <option value="pending">Ожидает</option>
+                            <option value="in_progress">В работе</option>
+                            <option value="completed">Завершен</option>
+                            <option value="cancelled">Отменен</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Поиск по клиенту или адресу">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control" id="dateFilter" placeholder="Фильтр по дате">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary" onclick="app.applyFilters()">
+                            <i class="fas fa-filter"></i> Применить
                         </button>
                     </div>
                 </div>
-                <div class="row">
+
+                <!-- Карточки заказов -->
+                <div class="row" id="orderCardsContainer">
+                    <!-- Карточки будут загружены динамически -->
+                </div>
+
+                <!-- Таблица заказов (скрыта по умолчанию) -->
+                <div class="row" id="ordersTableContainer" style="display: none;">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-body">
@@ -209,60 +248,183 @@
                 <div class="row mb-3">
                     <div class="col-12">
                         <h2><i class="fas fa-cog"></i> Администрирование</h2>
+                        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+                                    <i class="fas fa-users"></i> Пользователи
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">
+                                    <i class="fas fa-tools"></i> Услуги и цены
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="profiles-tab" data-bs-toggle="tab" data-bs-target="#profiles" type="button" role="tab">
+                                    <i class="fas fa-cogs"></i> Профили систем
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab">
+                                    <i class="fas fa-cog"></i> Настройки
+                                </button>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Пользователи</h5>
-                            </div>
-                            <div class="card-body">
-                                <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#newUserModal">
-                                    <i class="fas fa-plus"></i> Добавить пользователя
-                                </button>
-                                <div class="table-responsive">
-                                    <table class="table table-sm" id="usersTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Пользователь</th>
-                                                <th>Роль</th>
-                                                <th>Статус</th>
-                                                <th>Действия</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        </tbody>
-                                    </table>
+                
+                <div class="tab-content" id="adminTabContent">
+                    <!-- Пользователи -->
+                    <div class="tab-pane fade show active" id="users" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Управление пользователями</h5>
+                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newUserModal">
+                                            <i class="fas fa-plus"></i> Добавить пользователя
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm" id="usersTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Пользователь</th>
+                                                        <th>Роль</th>
+                                                        <th>Статус</th>
+                                                        <th>Действия</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5>Настройки системы</h5>
+
+                    <!-- Услуги и цены -->
+                    <div class="tab-pane fade" id="services" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Управление услугами и ценами</h5>
+                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newServiceModal">
+                                            <i class="fas fa-plus"></i> Добавить услугу
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm" id="servicesTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Название</th>
+                                                        <th>Категория</th>
+                                                        <th>Ед.изм.</th>
+                                                        <th>Базовая цена</th>
+                                                        <th>Тип расчета</th>
+                                                        <th>Статус</th>
+                                                        <th>Действия</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="card-body">
-                                <form id="settingsForm">
-                                    <div class="mb-3">
-                                        <label class="form-label">Название компании</label>
-                                        <input type="text" class="form-control" id="companyName">
+                        </div>
+                    </div>
+
+                    <!-- Профили систем -->
+                    <div class="tab-pane fade" id="profiles" role="tabpanel">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Профили систем и коэффициенты сложности</h5>
+                                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newProfileModal">
+                                            <i class="fas fa-plus"></i> Добавить профиль
+                                        </button>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Валюта</label>
-                                        <select class="form-select" id="currency">
-                                            <option value="RUB">Рубль (RUB)</option>
-                                        </select>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm" id="profilesTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Тип профиля</th>
+                                                        <th>Система</th>
+                                                        <th>Тип створки</th>
+                                                        <th>Коэффициент</th>
+                                                        <th>Статус</th>
+                                                        <th>Действия</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Система налогообложения</label>
-                                        <select class="form-select" id="taxSystem">
-                                            <option value="AUSN">АУСН</option>
-                                        </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Настройки -->
+                    <div class="tab-pane fade" id="settings" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Настройки системы</h5>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">Сохранить</button>
-                                </form>
+                                    <div class="card-body">
+                                        <form id="settingsForm">
+                                            <div class="mb-3">
+                                                <label class="form-label">Название компании</label>
+                                                <input type="text" class="form-control" id="companyName">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Валюта</label>
+                                                <select class="form-select" id="currency">
+                                                    <option value="RUB">Рубль (RUB)</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Система налогообложения</label>
+                                                <select class="form-select" id="taxSystem">
+                                                    <option value="AUSN">АУСН</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5>Брендинг</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Логотип компании</label>
+                                            <input type="file" class="form-control" id="logoUpload" accept="image/*">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Реквизиты</label>
+                                            <textarea class="form-control" id="companyDetails" rows="4" placeholder="ООО 'Оконные Мастера'&#10;ИНН: 1234567890&#10;ОГРН: 1234567890123&#10;Адрес: г. Москва, ул. Примерная, д. 1"></textarea>
+                                        </div>
+                                        <button type="button" class="btn btn-primary" onclick="app.saveBranding()">
+                                            <i class="fas fa-save"></i> Сохранить брендинг
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -389,6 +551,110 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                     <button type="button" class="btn btn-primary" id="saveUserBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Service Modal -->
+    <div class="modal fade" id="newServiceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Новая услуга</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newServiceForm">
+                        <div class="mb-3">
+                            <label class="form-label">Название услуги *</label>
+                            <input type="text" class="form-control" id="serviceName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Категория *</label>
+                            <select class="form-select" id="serviceCategory" required>
+                                <option value="mosquito">Москитные системы</option>
+                                <option value="blinds">Рулонные шторы</option>
+                                <option value="repair">Ремонт</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Единица измерения *</label>
+                            <select class="form-select" id="serviceUnitType" required>
+                                <option value="шт">Штука</option>
+                                <option value="м²">Квадратный метр</option>
+                                <option value="м.п.">Погонный метр</option>
+                                <option value="мм">Миллиметр</option>
+                                <option value="см">Сантиметр</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Базовая цена *</label>
+                            <input type="number" class="form-control" id="serviceBasePrice" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Тип расчета</label>
+                            <select class="form-select" id="serviceCalculationType">
+                                <option value="fixed">Фиксированная цена</option>
+                                <option value="linear">Цена за погонный метр</option>
+                                <option value="area">Цена за квадратный метр</option>
+                                <option value="quantity">Цена за количество</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Формула расчета (опционально)</label>
+                            <input type="text" class="form-control" id="serviceFormula" placeholder="Например: base_price * quantity * complexity_coefficient">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveServiceBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Profile Modal -->
+    <div class="modal fade" id="newProfileModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Новый профиль системы</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newProfileForm">
+                        <div class="mb-3">
+                            <label class="form-label">Тип профиля *</label>
+                            <select class="form-select" id="profileType" required>
+                                <option value="plastic">Пластик</option>
+                                <option value="wood">Дерево</option>
+                                <option value="aluminum">Алюминий</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Система *</label>
+                            <input type="text" class="form-control" id="profileSystemType" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Тип створки</label>
+                            <select class="form-select" id="profileSashType">
+                                <option value="">Не указано</option>
+                                <option value="поворотная">Поворотная</option>
+                                <option value="поворотно-откидная">Поворотно-откидная</option>
+                                <option value="откидная">Откидная</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Коэффициент сложности *</label>
+                            <input type="number" class="form-control" id="profileComplexityCoefficient" step="0.1" min="0.1" value="1.0" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="saveProfileBtn">Сохранить</button>
                 </div>
             </div>
         </div>

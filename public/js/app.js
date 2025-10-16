@@ -51,6 +51,16 @@ class WindowRepairApp {
             e.preventDefault();
             this.saveSettings();
         });
+
+        // Сохранение услуги
+        document.getElementById('saveServiceBtn').addEventListener('click', () => {
+            this.saveService();
+        });
+
+        // Сохранение профиля
+        document.getElementById('saveProfileBtn').addEventListener('click', () => {
+            this.saveProfile();
+        });
     }
 
     async checkAuth() {
@@ -288,6 +298,8 @@ class WindowRepairApp {
         await this.loadUsers();
         await this.loadSettings();
         await this.loadAssignableUsers();
+        await this.loadServices();
+        await this.loadServiceProfiles();
     }
 
     async loadAssignableUsers() {
@@ -549,6 +561,295 @@ class WindowRepairApp {
     deleteUser(userId) {
         console.log('Удаление пользователя:', userId);
         this.showAlert('Функция удаления пользователя в разработке', 'info');
+    }
+
+    // Services management
+    async loadServices() {
+        try {
+            const response = await fetch('/api/services');
+            if (response.ok) {
+                const services = await response.json();
+                this.services = services;
+                this.renderServicesTable(services);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки услуг:', error);
+        }
+    }
+
+    renderServicesTable(services) {
+        const tbody = document.querySelector('#servicesTable tbody');
+        tbody.innerHTML = '';
+
+        services.forEach(service => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${service.name}</td>
+                <td><span class="badge bg-primary">${this.getCategoryText(service.category)}</span></td>
+                <td>${service.unit_type}</td>
+                <td>${service.base_price.toLocaleString('ru-RU')} ₽</td>
+                <td>${this.getCalculationTypeText(service.calculation_type)}</td>
+                <td>${service.is_active ? 'Активна' : 'Неактивна'}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="app.editService(${service.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="app.deleteService(${service.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Service profiles management
+    async loadServiceProfiles() {
+        try {
+            const response = await fetch('/api/service-profiles');
+            if (response.ok) {
+                const profiles = await response.json();
+                this.serviceProfiles = profiles;
+                this.renderServiceProfilesTable(profiles);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки профилей:', error);
+        }
+    }
+
+    renderServiceProfilesTable(profiles) {
+        const tbody = document.querySelector('#profilesTable tbody');
+        tbody.innerHTML = '';
+
+        profiles.forEach(profile => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${this.getProfileTypeText(profile.profile_type)}</td>
+                <td>${profile.system_type}</td>
+                <td>${profile.sash_type || '-'}</td>
+                <td>${profile.complexity_coefficient}x</td>
+                <td>${profile.is_active ? 'Активен' : 'Неактивен'}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="app.editProfile(${profile.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="app.deleteProfile(${profile.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Order cards management
+    async showOrderCards(status = null) {
+        try {
+            const url = status ? `/api/order-cards?status=${status}` : '/api/order-cards';
+            const response = await fetch(url);
+            if (response.ok) {
+                const cards = await response.json();
+                this.renderOrderCards(cards);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки карточек заказов:', error);
+        }
+    }
+
+    renderOrderCards(cards) {
+        const container = document.getElementById('orderCardsContainer');
+        container.innerHTML = '';
+
+        cards.forEach(card => {
+            const cardHtml = this.createOrderCardHtml(card);
+            container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+    }
+
+    createOrderCardHtml(card) {
+        const statusColors = {
+            'pending': 'warning',
+            'in_progress': 'info',
+            'completed': 'success',
+            'cancelled': 'danger'
+        };
+
+        return `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">${card.order_number}</h6>
+                        <span class="badge bg-${statusColors[card.status] || 'secondary'}">${this.getStatusText(card.status)}</span>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">${card.client_name}</h6>
+                        <p class="card-text">
+                            <i class="fas fa-map-marker-alt"></i> ${card.address}<br>
+                            <i class="fas fa-phone"></i> ${card.client_phone}<br>
+                            <i class="fas fa-calendar"></i> ${card.visit_date ? new Date(card.visit_date).toLocaleString('ru-RU') : 'Не указано'}<br>
+                            <i class="fas fa-user"></i> ${card.assigned_name || 'Не назначен'}
+                        </p>
+                        <p class="card-text"><small class="text-muted">${card.problem_description || 'Описание не указано'}</small></p>
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100" role="group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="app.viewOrderCard(${card.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="app.startWork(${card.id})">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="app.cancelOrder(${card.id})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Helper methods
+    getCategoryText(category) {
+        const categories = {
+            'mosquito': 'Москитные системы',
+            'blinds': 'Рулонные шторы',
+            'repair': 'Ремонт'
+        };
+        return categories[category] || category;
+    }
+
+    getCalculationTypeText(type) {
+        const types = {
+            'fixed': 'Фиксированная',
+            'linear': 'За погонный метр',
+            'area': 'За квадратный метр',
+            'quantity': 'За количество'
+        };
+        return types[type] || type;
+    }
+
+    getProfileTypeText(type) {
+        const types = {
+            'plastic': 'Пластик',
+            'wood': 'Дерево',
+            'aluminum': 'Алюминий'
+        };
+        return types[type] || type;
+    }
+
+    // Placeholder methods for new functionality
+    editService(serviceId) {
+        console.log('Редактирование услуги:', serviceId);
+        this.showAlert('Функция редактирования услуги в разработке', 'info');
+    }
+
+    deleteService(serviceId) {
+        console.log('Удаление услуги:', serviceId);
+        this.showAlert('Функция удаления услуги в разработке', 'info');
+    }
+
+    editProfile(profileId) {
+        console.log('Редактирование профиля:', profileId);
+        this.showAlert('Функция редактирования профиля в разработке', 'info');
+    }
+
+    deleteProfile(profileId) {
+        console.log('Удаление профиля:', profileId);
+        this.showAlert('Функция удаления профиля в разработке', 'info');
+    }
+
+    viewOrderCard(cardId) {
+        console.log('Просмотр карточки заказа:', cardId);
+        this.showAlert('Функция просмотра карточки в разработке', 'info');
+    }
+
+    startWork(cardId) {
+        console.log('Начать работу с карточкой:', cardId);
+        this.showAlert('Функция начала работы в разработке', 'info');
+    }
+
+    cancelOrder(cardId) {
+        console.log('Отменить заказ:', cardId);
+        this.showAlert('Функция отмены заказа в разработке', 'info');
+    }
+
+    saveBranding() {
+        console.log('Сохранение брендинга');
+        this.showAlert('Функция сохранения брендинга в разработке', 'info');
+    }
+
+    applyFilters() {
+        console.log('Применение фильтров');
+        this.showAlert('Функция фильтрации в разработке', 'info');
+    }
+
+    // Save service
+    async saveService() {
+        const formData = {
+            name: document.getElementById('serviceName').value,
+            category: document.getElementById('serviceCategory').value,
+            unit_type: document.getElementById('serviceUnitType').value,
+            base_price: parseFloat(document.getElementById('serviceBasePrice').value),
+            calculation_type: document.getElementById('serviceCalculationType').value,
+            formula: document.getElementById('serviceFormula').value
+        };
+
+        try {
+            const response = await fetch('/api/services', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                this.showAlert('Услуга успешно создана!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('newServiceModal')).hide();
+                document.getElementById('newServiceForm').reset();
+                this.loadServices();
+            } else {
+                const error = await response.json();
+                this.showAlert(error.error || 'Ошибка создания услуги', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка сохранения услуги:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    // Save profile
+    async saveProfile() {
+        const formData = {
+            profile_type: document.getElementById('profileType').value,
+            system_type: document.getElementById('profileSystemType').value,
+            sash_type: document.getElementById('profileSashType').value,
+            complexity_coefficient: parseFloat(document.getElementById('profileComplexityCoefficient').value)
+        };
+
+        try {
+            const response = await fetch('/api/service-profiles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                this.showAlert('Профиль успешно создан!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('newProfileModal')).hide();
+                document.getElementById('newProfileForm').reset();
+                this.loadServiceProfiles();
+            } else {
+                const error = await response.json();
+                this.showAlert(error.error || 'Ошибка создания профиля', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка сохранения профиля:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
     }
 }
 
