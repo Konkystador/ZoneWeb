@@ -472,6 +472,74 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
   });
 });
 
+// Update user
+app.put('/api/users/:id', requireAuth, (req, res) => {
+  const userId = req.params.id;
+  const { username, full_name, role, password } = req.body;
+  
+  // Проверяем права доступа (только админ может редактировать пользователей)
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Недостаточно прав для редактирования пользователей' });
+  }
+  
+  // Проверяем, что пользователь не редактирует сам себя
+  if (parseInt(userId) === req.session.userId) {
+    return res.status(400).json({ error: 'Нельзя редактировать собственный профиль через админку' });
+  }
+  
+  let updateQuery = 'UPDATE users SET username = ?, full_name = ?, role = ?';
+  let updateParams = [username, full_name, role];
+  
+  // Добавляем пароль, если он указан
+  if (password && password.trim()) {
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    updateQuery += ', password = ?';
+    updateParams.push(hashedPassword);
+  }
+  
+  updateQuery += ' WHERE id = ?';
+  updateParams.push(userId);
+  
+  db.run(updateQuery, updateParams, function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка обновления пользователя' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    res.json({ success: true, message: 'Пользователь обновлен' });
+  });
+});
+
+// Delete user (deactivate)
+app.delete('/api/users/:id', requireAuth, (req, res) => {
+  const userId = req.params.id;
+  
+  // Проверяем права доступа (только админ может удалять пользователей)
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Недостаточно прав для удаления пользователей' });
+  }
+  
+  // Проверяем, что пользователь не удаляет сам себя
+  if (parseInt(userId) === req.session.userId) {
+    return res.status(400).json({ error: 'Нельзя удалить собственный аккаунт' });
+  }
+  
+  db.run('UPDATE users SET is_active = 0 WHERE id = ?', [userId], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка деактивации пользователя' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    res.json({ success: true, message: 'Пользователь деактивирован' });
+  });
+});
+
 // User profile routes
 app.get('/api/user/profile', requireAuth, (req, res) => {
   const userId = req.session.userId;

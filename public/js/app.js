@@ -574,38 +574,68 @@ class WindowRepairApp {
     }
 
     /**
-     * Сохранение нового пользователя в системе
-     * Собирает данные из формы и отправляет на сервер для создания пользователя
+     * Сохранение пользователя в системе (создание или редактирование)
+     * Собирает данные из формы и отправляет на сервер
      */
     async saveUser() {
-        // Собираем данные из формы создания пользователя
+        // Проверяем, это редактирование или создание
+        const editUserId = document.getElementById('editUserId');
+        const isEdit = editUserId && editUserId.value;
+        
+        // Собираем данные из формы
         const formData = {
             username: document.getElementById('newUsername').value,     // Имя пользователя
-            password: document.getElementById('newPassword').value,     // Пароль
             full_name: document.getElementById('newFullName').value,    // Полное имя
             role: document.getElementById('newUserRole').value          // Роль пользователя
         };
 
+        // Добавляем пароль только при создании или если он указан
+        const password = document.getElementById('newPassword').value;
+        if (!isEdit || password) {
+            formData.password = password;
+        }
+
         try {
-            // Отправляем запрос на сервер для создания пользователя
-            const response = await fetch('/api/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
+            let response;
+            if (isEdit) {
+                // Редактирование существующего пользователя
+                response = await fetch(`/api/users/${editUserId.value}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+            } else {
+                // Создание нового пользователя
+                response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+            }
 
             if (response.ok) {
-                // Если пользователь создан успешно
-                this.showAlert('Пользователь успешно создан!', 'success');
+                // Если операция успешна
+                const message = isEdit ? 'Пользователь успешно обновлен!' : 'Пользователь успешно создан!';
+                this.showAlert(message, 'success');
                 bootstrap.Modal.getInstance(document.getElementById('newUserModal')).hide(); // Закрываем модальное окно
                 document.getElementById('newUserForm').reset(); // Очищаем форму
                 this.loadUsers(); // Перезагружаем список пользователей
+                
+                // Сбрасываем режим редактирования
+                if (editUserId) {
+                    editUserId.remove();
+                }
+                document.querySelector('#newUserModal .modal-title').textContent = 'Новый пользователь';
+                document.getElementById('saveUserBtn').textContent = 'Сохранить';
             } else {
-                // Если произошла ошибка при создании пользователя
+                // Если произошла ошибка
                 const error = await response.json();
-                this.showAlert(error.error || 'Ошибка создания пользователя', 'danger');
+                const errorMessage = isEdit ? 'Ошибка обновления пользователя' : 'Ошибка создания пользователя';
+                this.showAlert(error.error || errorMessage, 'danger');
             }
         } catch (error) {
             console.error('Ошибка сохранения пользователя:', error);
@@ -721,14 +751,71 @@ class WindowRepairApp {
         }
     }
 
+    /**
+     * Редактирование пользователя
+     * @param {number} userId - ID пользователя для редактирования
+     */
     editUser(userId) {
         console.log('Редактирование пользователя:', userId);
-        this.showAlert('Функция редактирования пользователя в разработке', 'info');
+        
+        // Находим пользователя по ID
+        const user = this.users.find(u => u.id === userId);
+        if (!user) {
+            this.showAlert('Пользователь не найден', 'danger');
+            return;
+        }
+        
+        // Заполняем форму редактирования
+        document.getElementById('newUsername').value = user.username;
+        document.getElementById('newFullName').value = user.full_name || '';
+        document.getElementById('newUserRole').value = user.role;
+        
+        // Показываем модальное окно
+        const modal = new bootstrap.Modal(document.getElementById('newUserModal'));
+        modal.show();
+        
+        // Меняем заголовок и кнопку
+        document.querySelector('#newUserModal .modal-title').textContent = 'Редактирование пользователя';
+        document.getElementById('saveUserBtn').textContent = 'Сохранить изменения';
+        
+        // Добавляем скрытое поле с ID пользователя
+        let hiddenId = document.getElementById('editUserId');
+        if (!hiddenId) {
+            hiddenId = document.createElement('input');
+            hiddenId.type = 'hidden';
+            hiddenId.id = 'editUserId';
+            document.getElementById('newUserForm').appendChild(hiddenId);
+        }
+        hiddenId.value = userId;
     }
 
-    deleteUser(userId) {
+    /**
+     * Удаление пользователя (деактивация)
+     * @param {number} userId - ID пользователя для удаления
+     */
+    async deleteUser(userId) {
         console.log('Удаление пользователя:', userId);
-        this.showAlert('Функция удаления пользователя в разработке', 'info');
+        
+        if (!confirm('Вы уверены, что хотите деактивировать этого пользователя?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                this.showAlert('Пользователь деактивирован', 'success');
+                this.loadUsers(); // Перезагружаем список пользователей
+            } else {
+                const error = await response.json();
+                this.showAlert(error.error || 'Ошибка деактивации пользователя', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка удаления пользователя:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
     }
 
     // Services management
