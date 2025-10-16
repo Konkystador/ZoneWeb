@@ -198,5 +198,18 @@ class PDFExporter {
     }
 }
 
-// Создаем глобальный экземпляр
-const pdfExporter = new PDFExporter(app);
+// Создаем глобальный экземпляр после инициализации app
+let pdfExporter;
+
+// Инициализируем после загрузки app
+function initPDFExporter() {
+    if (window.app) {
+        pdfExporter = new PDFExporter(window.app);
+    } else {
+        // Ждем инициализации app
+        setTimeout(initPDFExporter, 100);
+    }
+}
+
+// Запускаем инициализацию
+initPDFExporter();

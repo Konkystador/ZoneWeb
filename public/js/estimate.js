@@ -339,5 +339,18 @@ class EstimateManager {
     }
 }
 
-// Создаем глобальный экземпляр
-const estimateManager = new EstimateManager(app);
+// Создаем глобальный экземпляр после инициализации app
+let estimateManager;
+
+// Инициализируем после загрузки app
+function initEstimateManager() {
+    if (window.app) {
+        estimateManager = new EstimateManager(window.app);
+    } else {
+        // Ждем инициализации app
+        setTimeout(initEstimateManager, 100);
+    }
+}
+
+// Запускаем инициализацию
+initEstimateManager();

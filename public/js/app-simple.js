@@ -740,8 +740,20 @@ function saveMeasurement() {
     addMeasurementToList(measurement);
     
     // Закрываем модальное окно
-    const modal = bootstrap.Modal.getInstance(document.getElementById('measurementModal'));
-    modal.hide();
+    const modalElement = document.getElementById('measurementModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+        modal.hide();
+    } else {
+        // Если экземпляр не найден, создаем новый
+        const newModal = new bootstrap.Modal(modalElement);
+        newModal.hide();
+    }
+    
+    // Удаляем модальное окно из DOM после закрытия
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        modalElement.remove();
+    }, { once: true });
     
     showAlert('Замер добавлен!', 'success');
 }
@@ -805,6 +817,55 @@ function removeMeasurement(button) {
 
 function searchAddressOnMap() {
     showAlert('Карты временно отключены', 'info');
+}
+
+// Функция создания нового пользователя
+function createUser() {
+    const username = document.getElementById('newUsername').value;
+    const password = document.getElementById('userPassword').value;
+    const fullName = document.getElementById('newFullName').value;
+    const role = document.getElementById('newUserRole').value;
+    
+    if (!username || !password) {
+        showAlert('Заполните обязательные поля', 'warning');
+        return;
+    }
+    
+    const userData = {
+        username: username,
+        password: password,
+        full_name: fullName,
+        role: role
+    };
+    
+    console.log('Создание пользователя:', userData);
+    
+    fetch('/api/users', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Пользователь создан успешно!', 'success');
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newUserModal'));
+            modal.hide();
+            // Очищаем форму
+            document.getElementById('newUserForm').reset();
+            // Перезагружаем данные админки
+            loadAdminData();
+        } else {
+            showAlert(data.error || 'Ошибка создания пользователя', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка создания пользователя:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    });
 }
 
 // ==================== НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ ====================
