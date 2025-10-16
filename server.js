@@ -227,8 +227,7 @@ db.serialize(() => {
     FOREIGN KEY (order_card_id) REFERENCES order_cards(id)
   )`);
 
-  // Add updated_at column to orders table if it doesn't exist
-  db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME`);
+  // Note: updated_at column already exists in orders table
 
   // User prefixes table for order numbering
   db.run(`CREATE TABLE IF NOT EXISTS user_prefixes (
