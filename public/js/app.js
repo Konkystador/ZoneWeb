@@ -866,14 +866,17 @@ class WindowRepairApp {
                     <!-- Подвал карточки с кнопками действий -->
                     <div class="card-footer">
                         <div class="btn-group w-100" role="group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="app.viewOrderCard(${card.id})" title="Просмотр">
-                                <i class="fas fa-eye"></i>
+                            <button class="btn btn-sm btn-outline-primary" onclick="app.viewOrderCard(${card.id})" title="Просмотр заказа">
+                                <i class="fas fa-eye"></i> Просмотр
                             </button>
                             <button class="btn btn-sm btn-outline-success" onclick="app.startWork(${card.id})" title="Начать работу">
-                                <i class="fas fa-play"></i>
+                                <i class="fas fa-play"></i> В работу
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="app.cancelOrder(${card.id})" title="Отменить">
-                                <i class="fas fa-times"></i>
+                            <button class="btn btn-sm btn-outline-warning" onclick="app.declineOrder(${card.id})" title="Отказ клиента">
+                                <i class="fas fa-ban"></i> Отказ
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="app.cancelOrder(${card.id})" title="Отменить заказ">
+                                <i class="fas fa-times"></i> Отмена
                             </button>
                         </div>
                     </div>
@@ -932,19 +935,222 @@ class WindowRepairApp {
         this.showAlert('Функция удаления профиля в разработке', 'info');
     }
 
+    /**
+     * Просмотр детальной информации о карточке заказа
+     * @param {number} cardId - ID карточки заказа
+     */
     viewOrderCard(cardId) {
         console.log('Просмотр карточки заказа:', cardId);
-        this.showAlert('Функция просмотра карточки в разработке', 'info');
+        
+        // Находим заказ по ID
+        const order = this.orders.find(o => o.id === cardId);
+        if (!order) {
+            this.showAlert('Заказ не найден', 'danger');
+            return;
+        }
+        
+        // Создаем модальное окно для просмотра заказа
+        this.showOrderDetailsModal(order);
     }
 
-    startWork(cardId) {
+    /**
+     * Начать работу с заказом (изменить статус на "В работе")
+     * @param {number} cardId - ID карточки заказа
+     */
+    async startWork(cardId) {
         console.log('Начать работу с карточкой:', cardId);
-        this.showAlert('Функция начала работы в разработке', 'info');
+        
+        try {
+            // Обновляем статус заказа на "В работе"
+            const response = await fetch(`/api/orders/${cardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'in_progress' })
+            });
+
+            if (response.ok) {
+                this.showAlert('Заказ переведен в работу!', 'success');
+                this.loadOrders(); // Перезагружаем список заказов
+            } else {
+                const error = await response.json();
+                this.showAlert(error.error || 'Ошибка обновления статуса', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка начала работы:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
     }
 
-    cancelOrder(cardId) {
+    /**
+     * Отказ клиента от заказа
+     * @param {number} cardId - ID карточки заказа
+     */
+    async declineOrder(cardId) {
+        console.log('Отказ клиента от заказа:', cardId);
+        
+        if (!confirm('Вы уверены, что клиент отказался от заказа?')) {
+            return;
+        }
+        
+        try {
+            // Обновляем статус заказа на "Отказ"
+            const response = await fetch(`/api/orders/${cardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'declined' })
+            });
+
+            if (response.ok) {
+                this.showAlert('Заказ помечен как отказ клиента', 'warning');
+                this.loadOrders(); // Перезагружаем список заказов
+            } else {
+                const error = await response.json();
+                this.showAlert(error.error || 'Ошибка обновления статуса', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка отказа от заказа:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    /**
+     * Отменить заказ (удалить в корзину)
+     * @param {number} cardId - ID карточки заказа
+     */
+    async cancelOrder(cardId) {
         console.log('Отменить заказ:', cardId);
-        this.showAlert('Функция отмены заказа в разработке', 'info');
+        
+        if (!confirm('Вы уверены, что хотите отменить этот заказ? Заказ будет перемещен в корзину.')) {
+            return;
+        }
+        
+        try {
+            // Обновляем статус заказа на "Отменен"
+            const response = await fetch(`/api/orders/${cardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'cancelled' })
+            });
+
+            if (response.ok) {
+                this.showAlert('Заказ отменен и перемещен в корзину', 'info');
+                this.loadOrders(); // Перезагружаем список заказов
+            } else {
+                const error = await response.json();
+                this.showAlert(error.error || 'Ошибка отмены заказа', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка отмены заказа:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    /**
+     * Показ модального окна с детальной информацией о заказе
+     * @param {Object} order - Объект заказа
+     */
+    showOrderDetailsModal(order) {
+        // Создаем HTML для модального окна
+        const modalHtml = `
+            <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Детали заказа ${order.order_number}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Информация о клиенте</h6>
+                                    <p><strong>Имя:</strong> ${order.client_name}</p>
+                                    <p><strong>Телефон:</strong> ${order.client_phone}</p>
+                                    <p><strong>Telegram:</strong> ${order.client_telegram || 'Не указан'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Адрес</h6>
+                                    <p><strong>Полный адрес:</strong> ${order.address}</p>
+                                    <p><strong>Город:</strong> ${order.city || 'Не указан'}</p>
+                                    <p><strong>Улица:</strong> ${order.street || 'Не указана'}</p>
+                                    <p><strong>Дом:</strong> ${order.house || 'Не указан'}</p>
+                                    <p><strong>Подъезд:</strong> ${order.entrance || 'Не указан'}</p>
+                                    <p><strong>Квартира:</strong> ${order.apartment || 'Не указана'}</p>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h6>Описание проблемы</h6>
+                                    <p>${order.problem_description || 'Описание не указано'}</p>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h6>Дата выезда</h6>
+                                    <p>${order.visit_date ? new Date(order.visit_date).toLocaleString('ru-RU') : 'Не указана'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Исполнитель</h6>
+                                    <p>${order.assigned_name || 'Не назначен'}</p>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h6>Статус</h6>
+                                    <span class="badge bg-${this.getStatusColor(order.status)}">${this.getStatusText(order.status)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                            <button type="button" class="btn btn-success" onclick="app.startWork(${order.id})" data-bs-dismiss="modal">
+                                <i class="fas fa-play"></i> В работу
+                            </button>
+                            <button type="button" class="btn btn-warning" onclick="app.declineOrder(${order.id})" data-bs-dismiss="modal">
+                                <i class="fas fa-ban"></i> Отказ
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="app.cancelOrder(${order.id})" data-bs-dismiss="modal">
+                                <i class="fas fa-times"></i> Отмена
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Удаляем существующее модальное окно, если есть
+        const existingModal = document.getElementById('orderDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Добавляем новое модальное окно в DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Показываем модальное окно
+        const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+        modal.show();
+    }
+
+    /**
+     * Получение цвета для статуса заказа
+     * @param {string} status - Статус заказа
+     * @returns {string} CSS класс цвета
+     */
+    getStatusColor(status) {
+        const statusColors = {
+            'pending': 'warning',
+            'in_progress': 'info',
+            'completed': 'success',
+            'cancelled': 'danger',
+            'declined': 'secondary'
+        };
+        return statusColors[status] || 'secondary';
     }
 
     saveBranding() {

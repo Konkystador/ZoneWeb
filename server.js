@@ -227,6 +227,9 @@ db.serialize(() => {
     FOREIGN KEY (order_card_id) REFERENCES order_cards(id)
   )`);
 
+  // Add updated_at column to orders table if it doesn't exist
+  db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`);
+
   // Insert default admin user
   const adminPassword = bcrypt.hashSync('admin123', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password, role, full_name) 
@@ -390,6 +393,31 @@ app.post('/api/orders', requireAuth, (req, res) => {
       return res.status(500).json({ error: 'Ошибка создания заказа' });
     }
     res.json({ id: this.lastID, order_number: orderNumber });
+  });
+});
+
+// Update order status
+app.put('/api/orders/:id', requireAuth, (req, res) => {
+  const orderId = req.params.id;
+  const { status } = req.body;
+  
+  // Проверяем, что статус валидный
+  const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled', 'declined'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Недопустимый статус заказа' });
+  }
+  
+  db.run('UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+    [status, orderId], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка обновления заказа' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+    
+    res.json({ success: true, message: 'Статус заказа обновлен' });
   });
 });
 
