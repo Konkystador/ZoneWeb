@@ -547,13 +547,106 @@ function showAlert(message, type = 'info') {
 
 // ==================== ЗАГЛУШКИ ДЛЯ НЕРЕАЛИЗОВАННЫХ ФУНКЦИЙ ====================
 
-function loadDashboard() {
+async function loadDashboard() {
     console.log('Загрузка данных дашборда');
+    
+    try {
+        // Загружаем все заказы для подсчета статистики
+        const response = await fetch('/api/orders');
+        if (response.ok) {
+            const orders = await response.json();
+            
+            // Подсчитываем статистику по статусам
+            const stats = {
+                new: 0,        // pending
+                inProgress: 0, // in_progress
+                completed: 0,  // completed
+                declined: 0,   // declined
+                cancelled: 0   // cancelled
+            };
+            
+            orders.forEach(order => {
+                switch(order.status) {
+                    case 'pending':
+                        stats.new++;
+                        break;
+                    case 'in_progress':
+                        stats.inProgress++;
+                        break;
+                    case 'completed':
+                        stats.completed++;
+                        break;
+                    case 'declined':
+                        stats.declined++;
+                        break;
+                    case 'cancelled':
+                        stats.cancelled++;
+                        break;
+                }
+            });
+            
+            // Обновляем счетчики на дашборде
+            document.getElementById('newOrdersCount').textContent = stats.new;
+            document.getElementById('inProgressCount').textContent = stats.inProgress;
+            document.getElementById('estimatesCount').textContent = stats.inProgress; // Сметы = заказы в работе
+            document.getElementById('completedCount').textContent = stats.completed;
+            
+            console.log('Статистика дашборда обновлена:', stats);
+        } else {
+            console.error('Ошибка загрузки заказов для дашборда');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки данных дашборда:', error);
+    }
 }
 
-function loadEstimates() {
+async function loadEstimates() {
     console.log('Загрузка смет');
-    showAlert('Функция смет в разработке', 'info');
+    
+    try {
+        // Загружаем заказы в работе (это и есть сметы)
+        const response = await fetch('/api/orders?status=in_progress');
+        if (response.ok) {
+            const orders = await response.json();
+            
+            // Отображаем заказы в работе как сметы
+            const estimatesTable = document.getElementById('estimatesTable');
+            if (estimatesTable) {
+                const tbody = estimatesTable.querySelector('tbody');
+                tbody.innerHTML = '';
+                
+                if (orders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Сметы не найдены</td></tr>';
+                } else {
+                    orders.forEach(order => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${order.order_number}</td>
+                            <td>${order.order_number}</td>
+                            <td>${order.client_name || 'Не указано'}</td>
+                            <td>В разработке</td>
+                            <td><span class="badge bg-info">${getStatusText(order.status)}</span></td>
+                            <td>${new Date(order.created_at).toLocaleDateString('ru-RU')}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="startWork(${order.id})">
+                                    <i class="fas fa-tools"></i> Работать
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            }
+            
+            console.log('Сметы загружены:', orders.length);
+        } else {
+            console.error('Ошибка загрузки смет');
+            showAlert('Ошибка загрузки смет', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки смет:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
 }
 
 function loadAdminData() {
@@ -818,6 +911,7 @@ function removeMeasurement(button) {
 function searchAddressOnMap() {
     showAlert('Карты временно отключены', 'info');
 }
+
 
 // Функция создания нового пользователя
 function createUser() {
