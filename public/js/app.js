@@ -33,6 +33,7 @@ class WindowRepairApp {
      * Привязывает функции к кнопкам и формам на странице
      */
     setupEventListeners() {
+        console.log('Настройка обработчиков событий...');
         // Обработчик формы входа в систему
         document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault(); // Предотвращаем стандартную отправку формы
@@ -54,9 +55,17 @@ class WindowRepairApp {
         });
 
         // Обработчик кнопки сохранения заказа
-        document.getElementById('saveOrderBtn').addEventListener('click', () => {
-            this.saveOrder(); // Вызываем метод сохранения заказа
-        });
+        const saveOrderBtn = document.getElementById('saveOrderBtn');
+        if (saveOrderBtn) {
+            console.log('Кнопка сохранения заказа найдена, добавляем обработчик');
+            saveOrderBtn.addEventListener('click', (e) => {
+                e.preventDefault(); // Предотвращаем стандартное поведение
+                console.log('Кнопка сохранения заказа нажата!'); // Отладочное сообщение
+                this.saveOrder(); // Вызываем метод сохранения заказа
+            });
+        } else {
+            console.error('Кнопка saveOrderBtn не найдена!');
+        }
 
         // Обработчик кнопки сохранения пользователя
         document.getElementById('saveUserBtn').addEventListener('click', () => {
@@ -447,24 +456,34 @@ class WindowRepairApp {
 
     // Сохранение нового заказа
     async saveOrder() {
-        console.log('Начинаем сохранение заказа...');
+        console.log('=== НАЧАЛО СОХРАНЕНИЯ ЗАКАЗА ===');
+        
+        // Проверяем, что все необходимые элементы существуют
+        const clientNameEl = document.getElementById('clientName');
+        const clientPhoneEl = document.getElementById('clientPhone');
+        
+        if (!clientNameEl || !clientPhoneEl) {
+            console.error('Не найдены обязательные поля формы!');
+            this.showAlert('Ошибка: форма не загружена правильно', 'danger');
+            return;
+        }
         
         // Собираем данные из формы
         const formData = {
-            client_name: document.getElementById('clientName').value,
-            client_phone: document.getElementById('clientPhone').value,
-            client_telegram: document.getElementById('clientTelegram').value,
-            address: `${document.getElementById('city').value}, ${document.getElementById('street').value}, ${document.getElementById('house').value}`,
-            city: document.getElementById('city').value,
-            street: document.getElementById('street').value,
-            house: document.getElementById('house').value,
-            entrance: document.getElementById('entrance').value,
-            floor: document.getElementById('floor').value,
-            apartment: document.getElementById('apartment').value,
-            intercom: document.getElementById('intercom').value,
-            problem_description: document.getElementById('problemDescription').value,
-            visit_date: document.getElementById('visitDate').value,
-            assigned_to: document.getElementById('assignedTo').value || null
+            client_name: clientNameEl.value,
+            client_phone: clientPhoneEl.value,
+            client_telegram: document.getElementById('clientTelegram')?.value || '',
+            address: `${document.getElementById('city')?.value || ''}, ${document.getElementById('street')?.value || ''}, ${document.getElementById('house')?.value || ''}`,
+            city: document.getElementById('city')?.value || '',
+            street: document.getElementById('street')?.value || '',
+            house: document.getElementById('house')?.value || '',
+            entrance: document.getElementById('entrance')?.value || '',
+            floor: document.getElementById('floor')?.value || '',
+            apartment: document.getElementById('apartment')?.value || '',
+            intercom: document.getElementById('intercom')?.value || '',
+            problem_description: document.getElementById('problemDescription')?.value || '',
+            visit_date: document.getElementById('visitDate')?.value || '',
+            assigned_to: document.getElementById('assignedTo')?.value || null
         };
 
         console.log('Данные для отправки:', formData);
@@ -1002,5 +1021,9 @@ class WindowRepairApp {
     }
 }
 
-// Инициализация приложения
-const app = new WindowRepairApp();
+// Инициализация приложения после полной загрузки DOM
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM загружен, инициализируем приложение...');
+    window.app = new WindowRepairApp();
+    console.log('Приложение инициализировано:', window.app);
+});
