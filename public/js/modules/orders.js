@@ -398,8 +398,8 @@ class OrdersModule {
                                     <p><strong>Домофон:</strong> ${order.intercom || 'Не указан'}</p>
                                     ${order.latitude && order.longitude ? `
                                         <div class="mt-3">
-                                            <h6>Карта</h6>
-                                            <div id="orderMap" style="width: 100%; height: 200px; border: 1px solid #ccc; border-radius: 5px;"></div>
+                                            <h6>Координаты</h6>
+                                            <p class="text-muted">Широта: ${order.latitude}, Долгота: ${order.longitude}</p>
                                             <div class="mt-2">
                                                 <a href="https://yandex.ru/maps/?pt=${order.longitude},${order.latitude}&z=16&l=map" target="_blank" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-external-link-alt"></i> Открыть в Яндекс.Картах
@@ -449,15 +449,7 @@ class OrdersModule {
         const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
         modal.show();
         
-        // Инициализируем карту, если есть координаты
-        if (order.latitude && order.longitude) {
-            setTimeout(() => {
-                if (window.mapManager) {
-                    window.mapManager.initMap('orderMap');
-                    window.mapManager.setCoordinates([order.latitude, order.longitude]);
-                }
-            }, 500);
-        }
+        // Карты отключены - координаты отображаются как текст
     }
 }
 

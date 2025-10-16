@@ -3,9 +3,6 @@
  * Модульная архитектура для удобства разработки и поддержки
  */
 
-// Глобальная переменная для совместимости
-let app;
-
 class WindowRepairApp {
     constructor() {
         this.currentUser = null;
@@ -217,8 +214,8 @@ class WindowRepairApp {
             problem_description: document.getElementById('problemDescription')?.value || '',
             visit_date: document.getElementById('visitDate')?.value || '',
             assigned_to: document.getElementById('assignedTo')?.value || null,
-            latitude: window.mapManager && window.mapManager.getSelectedCoordinates() ? window.mapManager.getSelectedCoordinates()[0] : null,
-            longitude: window.mapManager && window.mapManager.getSelectedCoordinates() ? window.mapManager.getSelectedCoordinates()[1] : null
+            latitude: null, // Карты отключены
+            longitude: null // Карты отключены
         };
 
         console.log('Данные для отправки:', formData);
@@ -296,9 +293,8 @@ class WindowRepairApp {
 // Инициализация приложения после загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM загружен, инициализируем приложение...');
-    app = new WindowRepairApp();
-    window.app = app;
-    console.log('Приложение инициализировано:', app);
+    window.app = new WindowRepairApp();
+    console.log('Приложение инициализировано:', window.app);
 });
 
 // Глобальные функции для совместимости
@@ -309,10 +305,5 @@ function addMeasurement() {
 }
 
 function searchAddressOnMap() {
-    const addressInput = document.getElementById('addressSearch');
-    if (addressInput && addressInput.value.trim()) {
-        window.mapManager.searchByAddress(addressInput.value.trim());
-    } else {
-        window.app.showAlert('Введите адрес для поиска', 'warning');
-    }
+    window.app.showAlert('Карты временно отключены', 'info');
 }

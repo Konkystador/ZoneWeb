@@ -844,14 +844,9 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Выбор точки на карте</label>
-                            <div class="input-group mb-2">
-                                <input type="text" class="form-control" id="addressSearch" placeholder="Введите адрес для поиска на карте">
-                                <button class="btn btn-outline-secondary" type="button" onclick="searchAddressOnMap()">
-                                    <i class="fas fa-search"></i> Найти
-                                </button>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Карты временно отключены. Адрес будет сохранен как текст.
                             </div>
-                            <div id="map" style="width: 100%; height: 300px; border: 1px solid #ccc; border-radius: 5px;"></div>
-                            <small class="form-text text-muted">Кликните на карте для выбора точного местоположения или используйте поиск</small>
                         </div>
                         <div class="row">
                             <div class="col-md-6">
@@ -1028,17 +1023,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Модули приложения -->
-    <script src="js/modules/auth.js?v=2"></script>
-    <script src="js/modules/orders.js?v=2"></script>
-    <script src="js/modules/work.js?v=2"></script>
-    
-    <!-- Карты 2ГИС -->
-    <script src="https://maps.api.2gis.ru/2.0/loader.js?pkg=full"></script>
+    <script src="js/modules/auth.js?v=3"></script>
+    <script src="js/modules/orders.js?v=3"></script>
+    <script src="js/modules/work.js?v=3"></script>
     
     <!-- Основное приложение -->
-    <script src="js/app-new.js?v=2"></script>
-    <script src="js/estimate.js?v=2"></script>
-    <script src="js/pdf-export.js?v=2"></script>
-    <script src="js/maps-2gis.js?v=2"></script>
+    <script src="js/app-new.js?v=3"></script>
+    <script src="js/estimate.js?v=3"></script>
+    <script src="js/pdf-export.js?v=3"></script>
 </body>
 </html>
