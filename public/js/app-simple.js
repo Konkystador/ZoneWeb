@@ -193,8 +193,14 @@ async function loadOrders() {
         if (response.ok) {
             orders = await response.json();
             console.log('Получены заказы:', orders);
-            renderOrderCards(orders);
-            console.log('Заказы отображены в интерфейсе');
+            
+            // По умолчанию показываем только заказы "ожидание" и "в работе"
+            const defaultFilteredOrders = orders.filter(order => 
+                order.status === 'pending' || order.status === 'in_progress'
+            );
+            
+            renderOrderCards(defaultFilteredOrders);
+            console.log('Заказы отображены в интерфейсе (фильтр по умолчанию)');
         } else {
             console.error('Ошибка загрузки заказов:', response.status);
             showAlert('Ошибка загрузки заказов', 'danger');
@@ -209,11 +215,23 @@ async function showOrderCards(status = null) {
     console.log('Показываем карточки заказов, статус:', status);
     
     try {
-        const url = status ? `/api/orders?status=${status}` : '/api/orders';
-        const response = await fetch(url);
+        // Загружаем все заказы
+        const response = await fetch('/api/orders');
         
         if (response.ok) {
-            const filteredOrders = await response.json();
+            const allOrders = await response.json();
+            let filteredOrders;
+            
+            if (status) {
+                // Фильтруем по конкретному статусу
+                filteredOrders = allOrders.filter(order => order.status === status);
+            } else {
+                // По умолчанию показываем только "ожидание" и "в работе"
+                filteredOrders = allOrders.filter(order => 
+                    order.status === 'pending' || order.status === 'in_progress'
+                );
+            }
+            
             console.log('Получены заказы для статуса', status, ':', filteredOrders);
             renderOrderCards(filteredOrders);
             
@@ -249,11 +267,12 @@ function updateActiveButton(status) {
             activeBtn.classList.add('active');
         }
     } else if (!status) {
-        // Активируем кнопку "Все заказы"
+        // По умолчанию (главная страница) - активируем кнопку "Все заказы"
         const allBtn = document.querySelector('button[onclick="showOrderCards()"]');
         if (allBtn) {
             allBtn.classList.add('active');
         }
+        console.log('Главная страница - показываем заказы по умолчанию');
     }
 }
 
