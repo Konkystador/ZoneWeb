@@ -30,6 +30,7 @@ app.use(helmet({
       objectSrc: ["'none'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+      scriptSrcAttr: ["'unsafe-inline'"], // Разрешаем inline event handlers
       upgradeInsecureRequests: null // Отключаем принудительное перенаправление на HTTPS
     }
   }
