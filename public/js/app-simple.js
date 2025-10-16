@@ -354,6 +354,9 @@ async function startWork(orderId) {
             showAlert('Заказ переведен в работу!', 'success');
             loadOrders(); // Перезагружаем список заказов
             
+            // Сохраняем ID заказа для работы
+            currentWorkOrderId = orderId;
+            
             // Переходим на страницу работы с заказом
             showPage('work');
         } else {
@@ -563,13 +566,241 @@ function loadProfileData() {
     showAlert('Функция профиля в разработке', 'info');
 }
 
+let currentWorkOrderId = null;
+
 function loadWorkData() {
     console.log('Загрузка данных работы');
-    showAlert('Функция работы в разработке', 'info');
+    
+    if (!currentWorkOrderId) {
+        showAlert('ID заказа не найден', 'danger');
+        showPage('orders');
+        return;
+    }
+
+    // Загружаем информацию о заказе
+    loadWorkOrderInfo(currentWorkOrderId);
+}
+
+async function loadWorkOrderInfo(orderId) {
+    try {
+        console.log('Загружаем данные заказа для работы:', orderId);
+        
+        const response = await fetch(`/api/orders/${orderId}`);
+        if (response.ok) {
+            const order = await response.json();
+            populateWorkOrderInfo(order);
+        } else {
+            showAlert('Ошибка загрузки данных заказа', 'danger');
+            showPage('orders');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки данных заказа:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+        showPage('orders');
+    }
+}
+
+function populateWorkOrderInfo(order) {
+    document.getElementById('workOrderNumber').textContent = order.order_number;
+    document.getElementById('workOrderStatus').textContent = getStatusText(order.status);
+    document.getElementById('workClientName').textContent = order.client_name || 'Не указано';
+    document.getElementById('workClientPhone').textContent = order.client_phone || 'Не указано';
+    document.getElementById('workClientTelegram').textContent = order.client_telegram || 'Не указано';
+    
+    // Формируем адрес
+    const address = [
+        order.city,
+        order.street,
+        order.house,
+        order.entrance ? `подъезд ${order.entrance}` : '',
+        order.floor ? `этаж ${order.floor}` : '',
+        order.apartment ? `кв. ${order.apartment}` : ''
+    ].filter(Boolean).join(', ');
+    document.getElementById('workAddress').textContent = address || 'Не указано';
+    
+    document.getElementById('workCreatedAt').textContent = new Date(order.created_at).toLocaleString('ru-RU');
+    document.getElementById('workDescription').textContent = order.problem_description || 'Не указано';
 }
 
 function addMeasurement() {
-    showAlert('Функция замеров в разработке', 'info');
+    console.log('Добавление нового замера');
+    
+    // Создаем модальное окно для добавления замера
+    const modalHtml = `
+        <div class="modal fade" id="measurementModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Добавить замер</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="measurementForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Тип работы *</label>
+                                        <select class="form-select" id="workType" required>
+                                            <option value="">Выберите тип работы</option>
+                                            <option value="mosquito">Москитные системы</option>
+                                            <option value="blinds">Рулонные шторы</option>
+                                            <option value="repair">Ремонт</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Название работы *</label>
+                                        <input type="text" class="form-control" id="workName" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Количество *</label>
+                                        <input type="number" class="form-control" id="quantity" min="1" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Единица измерения</label>
+                                        <select class="form-select" id="unit">
+                                            <option value="шт">Штуки</option>
+                                            <option value="м">Метры</option>
+                                            <option value="м²">Квадратные метры</option>
+                                            <option value="м³">Кубические метры</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Цена за единицу (₽) *</label>
+                                        <input type="number" class="form-control" id="unitPrice" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Размеры (мм/см/м)</label>
+                                        <input type="text" class="form-control" id="dimensions" placeholder="например: 1200x800 мм">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label class="form-label">Примечания</label>
+                                        <textarea class="form-control" id="notes" rows="3"></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Фотографии</label>
+                                        <input type="file" class="form-control" id="photos" multiple accept="image/*">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" onclick="saveMeasurement()">Сохранить замер</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Удаляем существующее модальное окно
+    const existingModal = document.getElementById('measurementModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Добавляем новое модальное окно
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Показываем модальное окно
+    const modal = new bootstrap.Modal(document.getElementById('measurementModal'));
+    modal.show();
+}
+
+function saveMeasurement() {
+    const measurement = {
+        workType: document.getElementById('workType').value,
+        workName: document.getElementById('workName').value,
+        quantity: parseFloat(document.getElementById('quantity').value),
+        unit: document.getElementById('unit').value,
+        unitPrice: parseFloat(document.getElementById('unitPrice').value),
+        dimensions: document.getElementById('dimensions').value,
+        notes: document.getElementById('notes').value
+    };
+    
+    // Валидация
+    if (!measurement.workType || !measurement.workName || !measurement.quantity || !measurement.unitPrice) {
+        showAlert('Заполните обязательные поля', 'warning');
+        return;
+    }
+    
+    // Вычисляем общую стоимость
+    const totalPrice = measurement.quantity * measurement.unitPrice;
+    
+    console.log('Сохранение замера:', measurement);
+    console.log('Общая стоимость:', totalPrice);
+    
+    // Добавляем замер в список
+    addMeasurementToList(measurement);
+    
+    // Закрываем модальное окно
+    const modal = bootstrap.Modal.getInstance(document.getElementById('measurementModal'));
+    modal.hide();
+    
+    showAlert('Замер добавлен!', 'success');
+}
+
+function addMeasurementToList(measurement) {
+    const measurementsList = document.getElementById('measurementsList');
+    
+    // Если список пустой, убираем заглушку
+    if (measurementsList.innerHTML.includes('Замеры не добавлены')) {
+        measurementsList.innerHTML = '';
+    }
+    
+    const measurementHtml = `
+        <div class="card mb-3 measurement-item">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="card-title">${measurement.workName}</h6>
+                        <p class="card-text">
+                            <strong>Тип:</strong> ${getWorkTypeText(measurement.workType)}<br>
+                            <strong>Количество:</strong> ${measurement.quantity} ${measurement.unit}<br>
+                            <strong>Цена за единицу:</strong> ${measurement.unitPrice.toLocaleString('ru-RU')} ₽<br>
+                            <strong>Общая стоимость:</strong> ${(measurement.quantity * measurement.unitPrice).toLocaleString('ru-RU')} ₽
+                            ${measurement.dimensions ? `<br><strong>Размеры:</strong> ${measurement.dimensions}` : ''}
+                            ${measurement.notes ? `<br><strong>Примечания:</strong> ${measurement.notes}` : ''}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeMeasurement(this)">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    measurementsList.insertAdjacentHTML('beforeend', measurementHtml);
+}
+
+function getWorkTypeText(type) {
+    const types = {
+        'mosquito': 'Москитные системы',
+        'blinds': 'Рулонные шторы',
+        'repair': 'Ремонт'
+    };
+    return types[type] || type;
+}
+
+function removeMeasurement(button) {
+    if (confirm('Удалить этот замер?')) {
+        button.closest('.measurement-item').remove();
+        
+        // Если список пустой, показываем заглушку
+        const measurementsList = document.getElementById('measurementsList');
+        if (measurementsList.children.length === 0) {
+            measurementsList.innerHTML = '<p class="text-muted text-center">Замеры не добавлены</p>';
+        }
+    }
 }
 
 function searchAddressOnMap() {
