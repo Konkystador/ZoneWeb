@@ -44,12 +44,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+// Rate limiting - отключаем для устранения ошибки с trust proxy
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100 // limit each IP to 100 requests per windowMs
+// });
+// app.use(limiter);
 
 // Session configuration
 app.use(session({
@@ -373,6 +373,34 @@ app.post('/api/login', (req, res) => {
 app.post('/api/logout', (req, res) => {
   req.session.destroy();
   res.json({ success: true });
+});
+
+// Check authentication status
+app.get('/api/auth/check', (req, res) => {
+  if (req.session.userId) {
+    // Get user details from database
+    db.get('SELECT id, username, role, full_name FROM users WHERE id = ? AND is_active = 1', [req.session.userId], (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: 'Ошибка базы данных' });
+      }
+      
+      if (user) {
+        res.json({
+          success: true,
+          user: {
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            full_name: user.full_name
+          }
+        });
+      } else {
+        res.json({ success: false });
+      }
+    });
+  } else {
+    res.json({ success: false });
+  }
 });
 
 app.get('/api/user', requireAuth, (req, res) => {

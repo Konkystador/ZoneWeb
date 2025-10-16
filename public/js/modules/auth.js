@@ -45,7 +45,7 @@ class AuthModule {
     async login(username, password) {
         try {
             console.log('Попытка входа:', username);
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -83,7 +83,7 @@ class AuthModule {
      */
     async logout() {
         try {
-            const response = await fetch('/api/auth/logout', {
+            const response = await fetch('/api/logout', {
                 method: 'POST'
             });
 
