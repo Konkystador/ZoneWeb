@@ -37,10 +37,10 @@ jobs:
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
+        host: 188.120.240.71
+        username: root
         key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT }}
+        port: 22
         script: |
           cd /var/www/ZoneWeb
           git pull origin main
@@ -48,6 +48,7 @@ jobs:
             npm ci --production
             npm run build --if-present
           fi
-          # Перезапуск сервиса (настройте под ваш веб-сервер)
+          # Перезапуск сервисов
           sudo systemctl reload nginx
-          # или для PM2: pm2 restart ZoneWeb
+          # Перезапуск PM2 если есть процессы
+          pm2 restart all || echo "No PM2 processes to restart"
