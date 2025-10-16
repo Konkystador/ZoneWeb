@@ -164,29 +164,42 @@ class WindowRepairApp {
         }
     }
 
+    /**
+     * Показ экрана входа в систему
+     * Скрывает основное приложение и показывает форму авторизации
+     */
     showLoginScreen() {
-        document.getElementById('loginScreen').style.display = 'block';
-        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'block';  // Показываем экран входа
+        document.getElementById('mainApp').style.display = 'none';       // Скрываем основное приложение
     }
 
+    /**
+     * Показ основного приложения после успешной авторизации
+     * Скрывает экран входа и показывает интерфейс приложения
+     */
     showMainApp() {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('loginScreen').style.display = 'none';   // Скрываем экран входа
+        document.getElementById('mainApp').style.display = 'block';      // Показываем основное приложение
         
-        // Обновляем имя пользователя
+        // Обновляем отображение имени пользователя в интерфейсе
         document.getElementById('userName').textContent = this.currentUser.username;
         
-        // Показываем/скрываем меню админа
+        // Показываем/скрываем административное меню в зависимости от роли пользователя
         const adminMenu = document.getElementById('adminMenu');
         if (this.currentUser.role === 'admin') {
-            adminMenu.style.display = 'block';
+            adminMenu.style.display = 'block'; // Показываем меню для администратора
         } else {
-            adminMenu.style.display = 'none';
+            adminMenu.style.display = 'none';  // Скрываем меню для обычных пользователей
         }
     }
 
+    /**
+     * Переключение между страницами приложения
+     * Скрывает все страницы и показывает выбранную, обновляет навигацию
+     * @param {string} pageName - Название страницы для отображения
+     */
     showPage(pageName) {
-        // Скрываем все страницы
+        // Скрываем все страницы приложения
         document.querySelectorAll('.page').forEach(page => {
             page.style.display = 'none';
         });
@@ -197,54 +210,62 @@ class WindowRepairApp {
             targetPage.style.display = 'block';
         }
 
-        // Обновляем активную ссылку в навигации
+        // Обновляем активную ссылку в навигационном меню
         document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
+            link.classList.remove('active'); // Убираем активный класс со всех ссылок
         });
-        document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+        document.querySelector(`[data-page="${pageName}"]`).classList.add('active'); // Добавляем активный класс к выбранной ссылке
 
-        // Загружаем данные для страницы
+        // Загружаем данные для выбранной страницы
         switch (pageName) {
             case 'dashboard':
-                this.loadDashboardData();
+                this.loadDashboardData(); // Загружаем данные дашборда
                 break;
             case 'orders':
-                this.loadOrders();
+                this.loadOrders(); // Загружаем список заказов
                 break;
             case 'estimates':
-                this.loadEstimates();
+                this.loadEstimates(); // Загружаем список смет
                 break;
             case 'admin':
-                this.loadAdminData();
+                this.loadAdminData(); // Загружаем административные данные
                 break;
         }
     }
 
+    /**
+     * Загрузка данных для главной страницы (дашборда)
+     * Получает статистику по заказам и сметам, обновляет счетчики
+     */
     async loadDashboardData() {
         try {
+            // Параллельно загружаем данные о заказах и сметах
             const [ordersResponse, estimatesResponse] = await Promise.all([
-                fetch('/api/orders'),
-                fetch('/api/estimates')
+                fetch('/api/orders'),    // Запрос списка заказов
+                fetch('/api/estimates')  // Запрос списка смет
             ]);
 
+            // Обрабатываем ответ с заказами
             if (ordersResponse.ok) {
                 const orders = await ordersResponse.json();
-                this.orders = orders;
+                this.orders = orders; // Сохраняем заказы в свойстве класса
                 
-                // Подсчитываем статистику
-                const newOrders = orders.filter(order => order.status === 'pending').length;
-                const inProgress = orders.filter(order => order.status === 'in_progress').length;
-                const completed = orders.filter(order => order.status === 'completed').length;
+                // Подсчитываем статистику по статусам заказов
+                const newOrders = orders.filter(order => order.status === 'pending').length;        // Новые заказы
+                const inProgress = orders.filter(order => order.status === 'in_progress').length;  // В работе
+                const completed = orders.filter(order => order.status === 'completed').length;     // Завершенные
                 
+                // Обновляем счетчики на странице
                 document.getElementById('newOrdersCount').textContent = newOrders;
                 document.getElementById('inProgressCount').textContent = inProgress;
                 document.getElementById('completedCount').textContent = completed;
             }
 
+            // Обрабатываем ответ со сметами
             if (estimatesResponse.ok) {
                 const estimates = await estimatesResponse.json();
-                this.estimates = estimates;
-                document.getElementById('estimatesCount').textContent = estimates.length;
+                this.estimates = estimates; // Сохраняем сметы в свойстве класса
+                document.getElementById('estimatesCount').textContent = estimates.length; // Обновляем счетчик смет
             }
         } catch (error) {
             console.error('Ошибка загрузки данных:', error);
@@ -513,15 +534,21 @@ class WindowRepairApp {
         }
     }
 
+    /**
+     * Сохранение нового пользователя в системе
+     * Собирает данные из формы и отправляет на сервер для создания пользователя
+     */
     async saveUser() {
+        // Собираем данные из формы создания пользователя
         const formData = {
-            username: document.getElementById('newUsername').value,
-            password: document.getElementById('newPassword').value,
-            full_name: document.getElementById('newFullName').value,
-            role: document.getElementById('newUserRole').value
+            username: document.getElementById('newUsername').value,     // Имя пользователя
+            password: document.getElementById('newPassword').value,     // Пароль
+            full_name: document.getElementById('newFullName').value,    // Полное имя
+            role: document.getElementById('newUserRole').value          // Роль пользователя
         };
 
         try {
+            // Отправляем запрос на сервер для создания пользователя
             const response = await fetch('/api/users', {
                 method: 'POST',
                 headers: {
@@ -531,11 +558,13 @@ class WindowRepairApp {
             });
 
             if (response.ok) {
+                // Если пользователь создан успешно
                 this.showAlert('Пользователь успешно создан!', 'success');
-                bootstrap.Modal.getInstance(document.getElementById('newUserModal')).hide();
-                document.getElementById('newUserForm').reset();
-                this.loadUsers();
+                bootstrap.Modal.getInstance(document.getElementById('newUserModal')).hide(); // Закрываем модальное окно
+                document.getElementById('newUserForm').reset(); // Очищаем форму
+                this.loadUsers(); // Перезагружаем список пользователей
             } else {
+                // Если произошла ошибка при создании пользователя
                 const error = await response.json();
                 this.showAlert(error.error || 'Ошибка создания пользователя', 'danger');
             }
@@ -595,22 +624,31 @@ class WindowRepairApp {
         return roleMap[role] || role;
     }
 
+    /**
+     * Показ уведомления пользователю
+     * Создает всплывающее уведомление в правом верхнем углу экрана
+     * @param {string} message - Текст сообщения для отображения
+     * @param {string} type - Тип уведомления (success, danger, warning, info)
+     */
     showAlert(message, type = 'info') {
-        // Создаем уведомление
+        // Создаем HTML-элемент для уведомления
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
         alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        
+        // Заполняем содержимое уведомления
         alertDiv.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         
+        // Добавляем уведомление на страницу
         document.body.appendChild(alertDiv);
         
-        // Автоматически скрываем через 5 секунд
+        // Автоматически скрываем уведомление через 5 секунд
         setTimeout(() => {
             if (alertDiv.parentNode) {
-                alertDiv.remove();
+                alertDiv.remove(); // Удаляем уведомление из DOM
             }
         }, 5000);
     }
