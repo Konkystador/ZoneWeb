@@ -96,7 +96,7 @@ class OrdersModule {
      * Отображение заказов в виде карточек
      */
     renderOrderCards(orders) {
-        const container = document.getElementById('ordersCards');
+        const container = document.getElementById('orderCardsContainer');
         if (!container) {
             console.error('Контейнер для карточек заказов не найден');
             return;

@@ -21,7 +21,11 @@ class MapManager2GIS {
         
         // Проверяем, что API 2ГИС загружен
         if (typeof DG === 'undefined') {
-            console.error('API 2ГИС не загружен');
+            console.log('API 2ГИС не загружен, ждем загрузки...');
+            // Ждем загрузки API 2ГИС
+            setTimeout(() => {
+                this.initMap(containerId, center);
+            }, 1000);
             return;
         }
 
@@ -213,9 +217,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newOrderModal) {
         newOrderModal.addEventListener('shown.bs.modal', () => {
             console.log('Модальное окно открыто, инициализируем карту 2ГИС');
+            // Увеличиваем задержку для загрузки API 2ГИС
             setTimeout(() => {
                 window.mapManager.initMap('map');
-            }, 100);
+            }, 2000);
         });
 
         newOrderModal.addEventListener('hidden.bs.modal', () => {
@@ -224,3 +229,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Альтернативный способ инициализации карты после загрузки API 2ГИС
+if (typeof DG !== 'undefined') {
+    console.log('API 2ГИС уже загружен');
+} else {
+    console.log('Ожидаем загрузки API 2ГИС...');
+    // Проверяем каждые 500мс, загружен ли API
+    const checkAPI = setInterval(() => {
+        if (typeof DG !== 'undefined') {
+            console.log('API 2ГИС загружен!');
+            clearInterval(checkAPI);
+        }
+    }, 500);
+}
