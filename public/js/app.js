@@ -75,6 +75,8 @@ class WindowRepairApp {
         const password = document.getElementById('password').value;
         const errorDiv = document.getElementById('loginError');
 
+        console.log('Попытка входа:', { username, password });
+
         try {
             const response = await fetch('/api/login', {
                 method: 'POST',
@@ -84,14 +86,19 @@ class WindowRepairApp {
                 body: JSON.stringify({ username, password })
             });
 
+            console.log('Ответ сервера:', response.status, response.statusText);
+
             const data = await response.json();
+            console.log('Данные ответа:', data);
 
             if (response.ok) {
                 this.currentUser = data.user;
+                console.log('Пользователь авторизован:', this.currentUser);
                 this.showMainApp();
                 this.loadDashboardData();
                 errorDiv.style.display = 'none';
             } else {
+                console.error('Ошибка авторизации:', data);
                 errorDiv.textContent = data.error || 'Ошибка входа';
                 errorDiv.style.display = 'block';
             }
