@@ -228,7 +228,7 @@ db.serialize(() => {
   )`);
 
   // Add updated_at column to orders table if it doesn't exist
-  db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`);
+  db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME`);
 
   // Insert default admin user
   const adminPassword = bcrypt.hashSync('admin123', 10);
@@ -407,7 +407,7 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Недопустимый статус заказа' });
   }
   
-  db.run('UPDATE orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
+  db.run('UPDATE orders SET status = ?, updated_at = datetime("now") WHERE id = ?', 
     [status, orderId], function(err) {
     if (err) {
       return res.status(500).json({ error: 'Ошибка обновления заказа' });
