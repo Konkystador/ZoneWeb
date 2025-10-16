@@ -87,6 +87,18 @@ class WindowRepairApp {
         document.getElementById('saveProfileBtn').addEventListener('click', () => {
             this.saveProfile(); // Вызываем метод сохранения профиля
         });
+
+        // Обработчик формы профиля пользователя
+        document.getElementById('profileForm').addEventListener('submit', (e) => {
+            e.preventDefault(); // Предотвращаем стандартную отправку формы
+            this.saveUserProfile(); // Вызываем метод сохранения профиля
+        });
+
+        // Обработчик формы смены пароля
+        document.getElementById('passwordForm').addEventListener('submit', (e) => {
+            e.preventDefault(); // Предотвращаем стандартную отправку формы
+            this.changePassword(); // Вызываем метод смены пароля
+        });
     }
 
     /**
@@ -238,6 +250,9 @@ class WindowRepairApp {
                 break;
             case 'admin':
                 this.loadAdminData(); // Загружаем административные данные
+                break;
+            case 'profile':
+                this.loadProfileData(); // Загружаем данные профиля
                 break;
         }
     }
@@ -1173,6 +1188,150 @@ class WindowRepairApp {
     applyFilters() {
         console.log('Применение фильтров');
         this.showAlert('Функция фильтрации в разработке', 'info');
+    }
+
+    /**
+     * Загрузка данных профиля пользователя
+     */
+    async loadProfileData() {
+        try {
+            console.log('Загружаем данные профиля...');
+            const response = await fetch('/api/user/profile');
+            
+            if (response.ok) {
+                const profile = await response.json();
+                console.log('Данные профиля:', profile);
+                this.populateProfileForm(profile);
+            } else {
+                console.error('Ошибка загрузки профиля:', response.status);
+                this.showAlert('Ошибка загрузки профиля', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки профиля:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    /**
+     * Заполнение формы профиля данными
+     * @param {Object} profile - Данные профиля пользователя
+     */
+    populateProfileForm(profile) {
+        document.getElementById('profileUsername').value = profile.username || '';
+        document.getElementById('profileRole').value = this.getRoleText(profile.role) || '';
+        document.getElementById('profileFullName').value = profile.full_name || '';
+        document.getElementById('profilePhone1').value = profile.phone1 || '';
+        document.getElementById('profilePhone2').value = profile.phone2 || '';
+        document.getElementById('profilePhone3').value = profile.phone3 || '';
+        document.getElementById('profileTelegram').value = profile.telegram || '';
+        document.getElementById('profileWhatsapp').value = profile.whatsapp || '';
+        document.getElementById('profileVk').value = profile.vk || '';
+        document.getElementById('profileMax').value = profile.max || '';
+        document.getElementById('profileOtherInfo').value = profile.other_info || '';
+    }
+
+    /**
+     * Сохранение профиля пользователя
+     */
+    async saveUserProfile() {
+        try {
+            console.log('Сохранение профиля пользователя...');
+            
+            const formData = {
+                full_name: document.getElementById('profileFullName').value,
+                phone1: document.getElementById('profilePhone1').value,
+                phone2: document.getElementById('profilePhone2').value,
+                phone3: document.getElementById('profilePhone3').value,
+                telegram: document.getElementById('profileTelegram').value,
+                whatsapp: document.getElementById('profileWhatsapp').value,
+                vk: document.getElementById('profileVk').value,
+                max: document.getElementById('profileMax').value,
+                other_info: document.getElementById('profileOtherInfo').value
+            };
+
+            // Проверяем обязательные поля
+            if (!formData.full_name || !formData.phone1) {
+                this.showAlert('Заполните обязательные поля: полное имя и телефон 1', 'warning');
+                return;
+            }
+
+            const response = await fetch('/api/user/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Профиль сохранен:', result);
+                this.showAlert('Профиль успешно сохранен!', 'success');
+            } else {
+                const error = await response.json();
+                console.error('Ошибка сохранения профиля:', error);
+                this.showAlert(error.error || 'Ошибка сохранения профиля', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка сохранения профиля:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    /**
+     * Смена пароля пользователя
+     */
+    async changePassword() {
+        try {
+            console.log('Смена пароля...');
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Проверяем обязательные поля
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                this.showAlert('Заполните все поля', 'warning');
+                return;
+            }
+
+            // Проверяем совпадение паролей
+            if (newPassword !== confirmPassword) {
+                this.showAlert('Новые пароли не совпадают', 'warning');
+                return;
+            }
+
+            // Проверяем длину пароля
+            if (newPassword.length < 6) {
+                this.showAlert('Пароль должен содержать минимум 6 символов', 'warning');
+                return;
+            }
+
+            const response = await fetch('/api/user/password', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    currentPassword: currentPassword,
+                    newPassword: newPassword
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Пароль изменен:', result);
+                this.showAlert('Пароль успешно изменен!', 'success');
+                document.getElementById('passwordForm').reset(); // Очищаем форму
+            } else {
+                const error = await response.json();
+                console.error('Ошибка смены пароля:', error);
+                this.showAlert(error.error || 'Ошибка смены пароля', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка смены пароля:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
     }
 
     // Save service
