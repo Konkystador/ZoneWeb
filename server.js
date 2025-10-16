@@ -240,6 +240,24 @@ db.serialize(() => {
     FOREIGN KEY (user_id) REFERENCES users(id)
   )`);
 
+  // User profiles table for additional user information
+  db.run(`CREATE TABLE IF NOT EXISTS user_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    full_name TEXT,
+    phone1 TEXT,
+    phone2 TEXT,
+    phone3 TEXT,
+    telegram TEXT,
+    whatsapp TEXT,
+    vk TEXT,
+    max TEXT,
+    other_info TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`);
+
   // Insert default admin user
   const adminPassword = bcrypt.hashSync('admin123', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password, role, full_name) 
@@ -451,6 +469,100 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
     }
     
     res.json({ success: true, message: 'Статус заказа обновлен' });
+  });
+});
+
+// User profile routes
+app.get('/api/user/profile', requireAuth, (req, res) => {
+  const userId = req.session.userId;
+  
+  db.get(`SELECT up.*, u.username, u.role 
+          FROM user_profiles up 
+          JOIN users u ON up.user_id = u.id 
+          WHERE up.user_id = ?`, [userId], (err, profile) => {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка получения профиля' });
+    }
+    
+    if (!profile) {
+      // Create empty profile if doesn't exist
+      db.run(`INSERT INTO user_profiles (user_id, full_name) VALUES (?, ?)`, 
+        [userId, req.session.userFullName || ''], function(err) {
+        if (err) {
+          return res.status(500).json({ error: 'Ошибка создания профиля' });
+        }
+        
+        db.get(`SELECT up.*, u.username, u.role 
+                FROM user_profiles up 
+                JOIN users u ON up.user_id = u.id 
+                WHERE up.user_id = ?`, [userId], (err, newProfile) => {
+          if (err) {
+            return res.status(500).json({ error: 'Ошибка получения профиля' });
+          }
+          res.json(newProfile);
+        });
+      });
+    } else {
+      res.json(profile);
+    }
+  });
+});
+
+app.put('/api/user/profile', requireAuth, (req, res) => {
+  const userId = req.session.userId;
+  const { full_name, phone1, phone2, phone3, telegram, whatsapp, vk, max, other_info } = req.body;
+  
+  db.run(`UPDATE user_profiles SET 
+          full_name = ?, phone1 = ?, phone2 = ?, phone3 = ?, 
+          telegram = ?, whatsapp = ?, vk = ?, max = ?, other_info = ?,
+          updated_at = datetime("now")
+          WHERE user_id = ?`, 
+    [full_name, phone1, phone2, phone3, telegram, whatsapp, vk, max, other_info, userId], 
+    function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка обновления профиля' });
+    }
+    
+    if (this.changes === 0) {
+      // Create profile if doesn't exist
+      db.run(`INSERT INTO user_profiles 
+              (user_id, full_name, phone1, phone2, phone3, telegram, whatsapp, vk, max, other_info) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+        [userId, full_name, phone1, phone2, phone3, telegram, whatsapp, vk, max, other_info], 
+        function(err) {
+        if (err) {
+          return res.status(500).json({ error: 'Ошибка создания профиля' });
+        }
+        res.json({ success: true, message: 'Профиль создан' });
+      });
+    } else {
+      res.json({ success: true, message: 'Профиль обновлен' });
+    }
+  });
+});
+
+app.put('/api/user/password', requireAuth, (req, res) => {
+  const userId = req.session.userId;
+  const { currentPassword, newPassword } = req.body;
+  
+  // Verify current password
+  db.get('SELECT password FROM users WHERE id = ?', [userId], (err, user) => {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка проверки пароля' });
+    }
+    
+    if (!bcrypt.compareSync(currentPassword, user.password)) {
+      return res.status(400).json({ error: 'Неверный текущий пароль' });
+    }
+    
+    // Update password
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+    db.run('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId], function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Ошибка обновления пароля' });
+      }
+      res.json({ success: true, message: 'Пароль обновлен' });
+    });
   });
 });
 
