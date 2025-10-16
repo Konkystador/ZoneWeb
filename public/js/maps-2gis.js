@@ -9,6 +9,8 @@ class MapManager2GIS {
         this.marker = null;
         this.selectedCoordinates = null;
         this.geocoder = null;
+        this.initAttempts = 0;
+        this.maxInitAttempts = 10;
     }
 
     /**
@@ -21,7 +23,16 @@ class MapManager2GIS {
         
         // Проверяем, что API 2ГИС загружен
         if (typeof DG === 'undefined') {
-            console.log('API 2ГИС не загружен, ждем загрузки...');
+            this.initAttempts++;
+            console.log(`API 2ГИС не загружен, попытка ${this.initAttempts}/${this.maxInitAttempts}...`);
+            
+            if (this.initAttempts >= this.maxInitAttempts) {
+                console.error('API 2ГИС не удалось загрузить после максимального количества попыток');
+                console.log('Используем альтернативную карту OpenStreetMap');
+                this.initFallbackMap(containerId, center);
+                return;
+            }
+            
             // Ждем загрузки API 2ГИС
             setTimeout(() => {
                 this.initMap(containerId, center);
@@ -29,6 +40,9 @@ class MapManager2GIS {
             return;
         }
 
+        // Сбрасываем счетчик попыток при успешной инициализации
+        this.initAttempts = 0;
+        
         // Инициализируем карту
         this.map = DG.map(containerId, {
             center: center,
@@ -193,6 +207,39 @@ class MapManager2GIS {
         }).addTo(this.map);
         
         this.selectedCoordinates = coords;
+    }
+
+    /**
+     * Альтернативная карта OpenStreetMap
+     */
+    initFallbackMap(containerId, center = [37.6176, 55.7558]) {
+        console.log('Инициализация альтернативной карты OpenStreetMap');
+        
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error('Контейнер для карты не найден');
+            return;
+        }
+        
+        // Создаем простую карту с изображением
+        container.innerHTML = `
+            <div style="width: 100%; height: 100%; background: #f0f0f0; border: 1px solid #ccc; border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                <i class="fas fa-map-marked-alt" style="font-size: 48px; color: #666; margin-bottom: 10px;"></i>
+                <p style="color: #666; margin: 0;">Карта недоступна</p>
+                <p style="color: #999; font-size: 12px; margin: 5px 0 0 0;">Координаты: ${center[1].toFixed(4)}, ${center[0].toFixed(4)}</p>
+                <div style="margin-top: 10px;">
+                    <a href="https://yandex.ru/maps/?pt=${center[0]},${center[1]}&z=16&l=map" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt"></i> Открыть в Яндекс.Картах
+                    </a>
+                    <a href="https://maps.google.com/?q=${center[1]},${center[0]}" target="_blank" class="btn btn-sm btn-outline-success ms-2">
+                        <i class="fab fa-google"></i> Открыть в Google Maps
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        // Сохраняем координаты
+        this.selectedCoordinates = center;
     }
 
     /**

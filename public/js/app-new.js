@@ -3,6 +3,9 @@
  * Модульная архитектура для удобства разработки и поддержки
  */
 
+// Глобальная переменная для совместимости
+let app;
+
 class WindowRepairApp {
     constructor() {
         this.currentUser = null;
@@ -293,8 +296,9 @@ class WindowRepairApp {
 // Инициализация приложения после загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM загружен, инициализируем приложение...');
-    window.app = new WindowRepairApp();
-    console.log('Приложение инициализировано:', window.app);
+    app = new WindowRepairApp();
+    window.app = app;
+    console.log('Приложение инициализировано:', app);
 });
 
 // Глобальные функции для совместимости
