@@ -3,6 +3,14 @@
  * Модульная архитектура для удобства разработки и поддержки
  */
 
+// Глобальная переменная для совместимости
+var app;
+
+// Немедленная инициализация для совместимости
+if (typeof window !== 'undefined') {
+    window.app = null;
+}
+
 class WindowRepairApp {
     constructor() {
         this.currentUser = null;
@@ -290,20 +298,47 @@ class WindowRepairApp {
     }
 }
 
+// Функция для проверки готовности приложения
+function waitForApp(callback) {
+    if (app && app.ordersModule) {
+        callback();
+    } else {
+        setTimeout(() => waitForApp(callback), 100);
+    }
+}
+
 // Инициализация приложения после загрузки DOM
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM загружен, инициализируем приложение...');
-    window.app = new WindowRepairApp();
-    console.log('Приложение инициализировано:', window.app);
+    app = new WindowRepairApp();
+    window.app = app;
+    console.log('Приложение инициализировано:', app);
+    
+    // Убеждаемся, что app доступен глобально
+    if (typeof app === 'undefined') {
+        console.error('Ошибка инициализации приложения');
+    } else {
+        console.log('Приложение успешно инициализировано и доступно глобально');
+    }
 });
 
 // Глобальные функции для совместимости
 function addMeasurement() {
-    if (window.app && window.app.workModule) {
+    if (app && app.workModule) {
+        app.workModule.addMeasurement();
+    } else if (window.app && window.app.workModule) {
         window.app.workModule.addMeasurement();
+    } else {
+        console.error('Приложение не инициализировано');
     }
 }
 
 function searchAddressOnMap() {
-    window.app.showAlert('Карты временно отключены', 'info');
+    if (app) {
+        app.showAlert('Карты временно отключены', 'info');
+    } else if (window.app) {
+        window.app.showAlert('Карты временно отключены', 'info');
+    } else {
+        console.error('Приложение не инициализировано');
+    }
 }
