@@ -1210,7 +1210,23 @@ class WindowRepairApp {
                                     <p><strong>Улица:</strong> ${order.street || 'Не указана'}</p>
                                     <p><strong>Дом:</strong> ${order.house || 'Не указан'}</p>
                                     <p><strong>Подъезд:</strong> ${order.entrance || 'Не указан'}</p>
+                                    <p><strong>Этаж:</strong> ${order.floor || 'Не указан'}</p>
                                     <p><strong>Квартира:</strong> ${order.apartment || 'Не указана'}</p>
+                                    <p><strong>Домофон:</strong> ${order.intercom || 'Не указан'}</p>
+                                    ${order.latitude && order.longitude ? `
+                                        <div class="mt-3">
+                                            <h6>Карта</h6>
+                                            <div id="orderMap" style="width: 100%; height: 200px; border: 1px solid #ccc; border-radius: 5px;"></div>
+                                            <div class="mt-2">
+                                                <a href="https://yandex.ru/maps/?pt=${order.longitude},${order.latitude}&z=16&l=map" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-external-link-alt"></i> Открыть в Яндекс.Картах
+                                                </a>
+                                                <a href="https://maps.google.com/?q=${order.latitude},${order.longitude}" target="_blank" class="btn btn-sm btn-outline-success ms-2">
+                                                    <i class="fab fa-google"></i> Открыть в Google Maps
+                                                </a>
+                                            </div>
+                                        </div>
+                                    ` : ''}
                                 </div>
                             </div>
                             <div class="row mt-3">
@@ -1290,7 +1306,57 @@ class WindowRepairApp {
 
     applyFilters() {
         console.log('Применение фильтров');
-        this.showAlert('Функция фильтрации в разработке', 'info');
+        
+        const statusFilter = document.getElementById('statusFilter')?.value;
+        const searchQuery = document.getElementById('searchInput')?.value;
+        const dateFilter = document.getElementById('dateFilter')?.value;
+        
+        console.log('Фильтры:', { statusFilter, searchQuery, dateFilter });
+        
+        // Фильтруем заказы
+        let filteredOrders = [...this.orders];
+        
+        // Фильтр по статусу
+        if (statusFilter) {
+            filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+        }
+        
+        // Фильтр по поиску
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            filteredOrders = filteredOrders.filter(order => 
+                order.client_name?.toLowerCase().includes(query) ||
+                order.client_phone?.includes(query) ||
+                order.order_number?.toLowerCase().includes(query) ||
+                order.address?.toLowerCase().includes(query)
+            );
+        }
+        
+        // Фильтр по дате
+        if (dateFilter) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            filteredOrders = filteredOrders.filter(order => {
+                const orderDate = new Date(order.created_at);
+                
+                switch (dateFilter) {
+                    case 'today':
+                        return orderDate >= today;
+                    case 'week':
+                        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        return orderDate >= weekAgo;
+                    case 'month':
+                        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        return orderDate >= monthAgo;
+                    default:
+                        return true;
+                }
+            });
+        }
+        
+        console.log('Отфильтрованные заказы:', filteredOrders);
+        this.renderOrderCards(filteredOrders);
     }
 
     /**
