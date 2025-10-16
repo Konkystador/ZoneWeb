@@ -940,11 +940,16 @@ class WindowRepairApp {
      * @param {number} cardId - ID карточки заказа
      */
     viewOrderCard(cardId) {
-        console.log('Просмотр карточки заказа:', cardId);
+        console.log('=== ПРОСМОТР КАРТОЧКИ ЗАКАЗА ===');
+        console.log('ID карточки:', cardId);
+        console.log('Доступные заказы:', this.orders);
         
         // Находим заказ по ID
         const order = this.orders.find(o => o.id === cardId);
+        console.log('Найденный заказ:', order);
+        
         if (!order) {
+            console.error('Заказ не найден!');
             this.showAlert('Заказ не найден', 'danger');
             return;
         }
@@ -958,10 +963,12 @@ class WindowRepairApp {
      * @param {number} cardId - ID карточки заказа
      */
     async startWork(cardId) {
-        console.log('Начать работу с карточкой:', cardId);
+        console.log('=== НАЧАЛО РАБОТЫ С ЗАКАЗОМ ===');
+        console.log('ID заказа:', cardId);
         
         try {
             // Обновляем статус заказа на "В работе"
+            console.log('Отправляем запрос на обновление статуса...');
             const response = await fetch(`/api/orders/${cardId}`, {
                 method: 'PUT',
                 headers: {
@@ -970,11 +977,16 @@ class WindowRepairApp {
                 body: JSON.stringify({ status: 'in_progress' })
             });
 
+            console.log('Ответ сервера:', response.status, response.statusText);
+
             if (response.ok) {
+                const result = await response.json();
+                console.log('Результат обновления:', result);
                 this.showAlert('Заказ переведен в работу!', 'success');
                 this.loadOrders(); // Перезагружаем список заказов
             } else {
                 const error = await response.json();
+                console.error('Ошибка обновления статуса:', error);
                 this.showAlert(error.error || 'Ошибка обновления статуса', 'danger');
             }
         } catch (error) {

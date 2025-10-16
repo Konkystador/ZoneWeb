@@ -230,10 +230,24 @@ db.serialize(() => {
   // Add updated_at column to orders table if it doesn't exist
   db.run(`ALTER TABLE orders ADD COLUMN updated_at DATETIME`);
 
+  // User prefixes table for order numbering
+  db.run(`CREATE TABLE IF NOT EXISTS user_prefixes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    prefix TEXT UNIQUE NOT NULL,
+    last_number INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`);
+
   // Insert default admin user
   const adminPassword = bcrypt.hashSync('admin123', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password, role, full_name) 
           VALUES ('admin', ?, 'admin', 'Администратор')`, [adminPassword]);
+
+  // Insert default prefix for admin
+  db.run(`INSERT OR IGNORE INTO user_prefixes (user_id, prefix) 
+          VALUES (1, 'ADM')`);
 
   // Insert default roles
   db.run(`INSERT OR IGNORE INTO roles (name, permissions) VALUES 
@@ -378,21 +392,40 @@ app.post('/api/orders', requireAuth, (req, res) => {
     visit_date, assigned_to
   } = req.body;
   
-  const orderNumber = 'ORD-' + Date.now();
-  
-  db.run(`INSERT INTO orders (
-    order_number, client_name, client_phone, client_telegram, address, city, street,
-    house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
-    visit_date, assigned_to, created_by
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  [orderNumber, client_name, client_phone, client_telegram, address, city, street,
-   house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
-   visit_date, assigned_to, req.session.userId],
-  function(err) {
+  // Generate order number with user prefix
+  db.get('SELECT prefix, last_number FROM user_prefixes WHERE user_id = ?', [req.session.userId], (err, prefixRow) => {
     if (err) {
-      return res.status(500).json({ error: 'Ошибка создания заказа' });
+      return res.status(500).json({ error: 'Ошибка получения префикса пользователя' });
     }
-    res.json({ id: this.lastID, order_number: orderNumber });
+    
+    if (!prefixRow) {
+      return res.status(400).json({ error: 'Префикс пользователя не настроен. Обратитесь к администратору.' });
+    }
+    
+    const newNumber = prefixRow.last_number + 1;
+    const orderNumber = `${prefixRow.prefix}-${newNumber.toString().padStart(6, '0')}`;
+    
+    // Update last number and create order
+    db.run(`UPDATE user_prefixes SET last_number = ? WHERE user_id = ?`, [newNumber, req.session.userId], (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Ошибка обновления номера заказа' });
+      }
+      
+      db.run(`INSERT INTO orders (
+        order_number, client_name, client_phone, client_telegram, address, city, street,
+        house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
+        visit_date, assigned_to, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [orderNumber, client_name, client_phone, client_telegram, address, city, street,
+       house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
+       visit_date, assigned_to, req.session.userId],
+      function(err) {
+        if (err) {
+          return res.status(500).json({ error: 'Ошибка создания заказа' });
+        }
+        res.json({ id: this.lastID, order_number: orderNumber });
+      });
+    });
   });
 });
 
