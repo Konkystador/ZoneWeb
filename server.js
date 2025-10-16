@@ -14,6 +14,10 @@ const moment = require('moment');             // Работа с датами и
 
 // Создание экземпляра Express приложения
 const app = express();
+
+// Настройка trust proxy для работы за Nginx
+app.set('trust proxy', 1);
+
 // Порт для запуска сервера (по умолчанию 3000)
 const PORT = process.env.PORT || 3000;
 
