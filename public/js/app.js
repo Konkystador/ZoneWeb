@@ -511,7 +511,9 @@ class WindowRepairApp {
             intercom: document.getElementById('intercom')?.value || '',
             problem_description: document.getElementById('problemDescription')?.value || '',
             visit_date: document.getElementById('visitDate')?.value || '',
-            assigned_to: document.getElementById('assignedTo')?.value || null
+            assigned_to: document.getElementById('assignedTo')?.value || null,
+            latitude: window.mapManager && window.mapManager.getSelectedCoordinates() ? window.mapManager.getSelectedCoordinates()[0] : null,
+            longitude: window.mapManager && window.mapManager.getSelectedCoordinates() ? window.mapManager.getSelectedCoordinates()[1] : null
         };
 
         console.log('Данные для отправки:', formData);
