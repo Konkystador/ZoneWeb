@@ -350,6 +350,126 @@
                 </div>
             </div>
 
+            <!-- Work Page -->
+            <div id="workPage" class="page" style="display: none;">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h2><i class="fas fa-tools"></i> Работа с заказом</h2>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="#" data-page="orders">Заказы</a></li>
+                                <li class="breadcrumb-item active" id="workBreadcrumb">Заказ #<span id="workOrderNumber"></span></li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+                
+                <!-- Order Info Card -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Информация о заказе</h5>
+                                <span class="badge bg-primary" id="workOrderStatus">В работе</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Клиент:</strong> <span id="workClientName"></span></p>
+                                        <p><strong>Телефон:</strong> <span id="workClientPhone"></span></p>
+                                        <p><strong>Telegram:</strong> <span id="workClientTelegram"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Адрес:</strong> <span id="workAddress"></span></p>
+                                        <p><strong>Дата создания:</strong> <span id="workCreatedAt"></span></p>
+                                        <p><strong>Описание:</strong> <span id="workDescription"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Work Tabs -->
+                <div class="row">
+                    <div class="col-12">
+                        <ul class="nav nav-tabs" id="workTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="measurements-tab" data-bs-toggle="tab" data-bs-target="#measurements" type="button" role="tab">
+                                    <i class="fas fa-ruler"></i> Замеры
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="estimate-tab" data-bs-toggle="tab" data-bs-target="#estimate" type="button" role="tab">
+                                    <i class="fas fa-calculator"></i> Смета
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="photos-tab" data-bs-toggle="tab" data-bs-target="#photos" type="button" role="tab">
+                                    <i class="fas fa-camera"></i> Фото
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="workTabContent">
+                            <!-- Measurements Tab -->
+                            <div class="tab-pane fade show active" id="measurements" role="tabpanel">
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Замеры и расчеты</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <button class="btn btn-primary" onclick="addMeasurement()">
+                                                    <i class="fas fa-plus"></i> Добавить замер
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="measurementsList">
+                                            <!-- Measurements will be added here dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Estimate Tab -->
+                            <div class="tab-pane fade" id="estimate" role="tabpanel">
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Смета</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="estimateContent">
+                                            <p class="text-muted">Сначала добавьте замеры для создания сметы</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Photos Tab -->
+                            <div class="tab-pane fade" id="photos" role="tabpanel">
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Фотографии</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <input type="file" class="form-control" id="photoUpload" multiple accept="image/*">
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3" id="photosList">
+                                            <!-- Photos will be displayed here -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Admin Page -->
             <div id="adminPage" class="page" style="display: none;">
                 <div class="row mb-3">

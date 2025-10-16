@@ -15,6 +15,7 @@ class WindowRepairApp {
         this.settings = {};            // Настройки системы
         this.services = [];            // Массив услуг и цен
         this.serviceProfiles = [];     // Массив профилей систем
+        this.currentWorkOrderId = null; // ID текущего заказа в работе
         
         this.init(); // Запуск инициализации приложения
     }
@@ -253,6 +254,9 @@ class WindowRepairApp {
                 break;
             case 'profile':
                 this.loadProfileData(); // Загружаем данные профиля
+                break;
+            case 'work':
+                this.loadWorkData(); // Загружаем данные для работы с заказом
                 break;
         }
     }
@@ -1086,6 +1090,10 @@ class WindowRepairApp {
                 console.log('Результат обновления:', result);
                 this.showAlert('Заказ переведен в работу!', 'success');
                 this.loadOrders(); // Перезагружаем список заказов
+                
+                // Переходим на страницу работы с заказом
+                this.currentWorkOrderId = cardId;
+                this.showPage('work');
             } else {
                 const error = await response.json();
                 console.error('Ошибка обновления статуса:', error);
@@ -1275,6 +1283,61 @@ class WindowRepairApp {
     applyFilters() {
         console.log('Применение фильтров');
         this.showAlert('Функция фильтрации в разработке', 'info');
+    }
+
+    /**
+     * Загрузка данных для работы с заказом
+     */
+    async loadWorkData() {
+        if (!this.currentWorkOrderId) {
+            this.showAlert('ID заказа не найден', 'danger');
+            this.showPage('orders');
+            return;
+        }
+
+        try {
+            console.log('Загружаем данные заказа для работы:', this.currentWorkOrderId);
+            
+            // Загружаем информацию о заказе
+            const response = await fetch(`/api/orders/${this.currentWorkOrderId}`);
+            if (response.ok) {
+                const order = await response.json();
+                this.populateWorkOrderInfo(order);
+            } else {
+                this.showAlert('Ошибка загрузки данных заказа', 'danger');
+                this.showPage('orders');
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки данных заказа:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+            this.showPage('orders');
+        }
+    }
+
+    /**
+     * Заполнение информации о заказе на странице работы
+     * @param {Object} order - Данные заказа
+     */
+    populateWorkOrderInfo(order) {
+        document.getElementById('workOrderNumber').textContent = order.order_number;
+        document.getElementById('workOrderStatus').textContent = this.getStatusText(order.status);
+        document.getElementById('workClientName').textContent = order.client_name || 'Не указано';
+        document.getElementById('workClientPhone').textContent = order.client_phone || 'Не указано';
+        document.getElementById('workClientTelegram').textContent = order.client_telegram || 'Не указано';
+        
+        // Формируем адрес
+        const address = [
+            order.city,
+            order.street,
+            order.house,
+            order.entrance ? `подъезд ${order.entrance}` : '',
+            order.floor ? `этаж ${order.floor}` : '',
+            order.apartment ? `кв. ${order.apartment}` : ''
+        ].filter(Boolean).join(', ');
+        document.getElementById('workAddress').textContent = address || 'Не указано';
+        
+        document.getElementById('workCreatedAt').textContent = new Date(order.created_at).toLocaleString('ru-RU');
+        document.getElementById('workDescription').textContent = order.description || 'Не указано';
     }
 
     /**
@@ -1496,3 +1559,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.app = new WindowRepairApp();
     console.log('Приложение инициализировано:', window.app);
 });
+
+// Глобальные функции для работы с заказом
+/**
+ * Добавление нового замера
+ */
+function addMeasurement() {
+    console.log('Добавление нового замера');
+    window.app.showAlert('Функция добавления замеров в разработке', 'info');
+}
