@@ -287,14 +287,17 @@ class WindowRepairApp {
      */
     async loadOrders() {
         try {
+            console.log('Загружаем список заказов...');
             // Отправляем запрос на сервер для получения списка заказов
             const response = await fetch('/api/orders');
             
             if (response.ok) {
                 // Если запрос успешен, получаем данные заказов
                 const orders = await response.json();
+                console.log('Получены заказы:', orders);
                 this.orders = orders; // Сохраняем заказы в свойстве класса
                 this.renderOrderCards(orders); // Отображаем заказы в виде карточек
+                console.log('Заказы отображены в интерфейсе');
             } else {
                 console.error('Ошибка загрузки заказов:', response.status);
             }
@@ -516,7 +519,9 @@ class WindowRepairApp {
                 this.showAlert('Заказ успешно создан!', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('newOrderModal')).hide();
                 document.getElementById('newOrderForm').reset();
-                this.loadOrders();
+                console.log('Перезагружаем список заказов...');
+                await this.loadOrders();
+                console.log('Список заказов обновлен');
             } else {
                 const error = await response.json();
                 console.error('Ошибка создания заказа:', error);
