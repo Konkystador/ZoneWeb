@@ -258,6 +258,12 @@ class WindowRepairApp {
             case 'work':
                 this.loadWorkData(); // Загружаем данные для работы с заказом
                 break;
+            case 'declined':
+                this.loadDeclinedOrders(); // Загружаем отказы клиентов
+                break;
+            case 'cancelled':
+                this.loadCancelledOrders(); // Загружаем отмененные заказы
+                break;
         }
     }
 
@@ -1341,6 +1347,126 @@ class WindowRepairApp {
     }
 
     /**
+     * Загрузка отказов клиентов
+     */
+    async loadDeclinedOrders() {
+        try {
+            console.log('Загружаем отказы клиентов...');
+            const response = await fetch('/api/orders?status=declined');
+            
+            if (response.ok) {
+                const orders = await response.json();
+                console.log('Получены отказы:', orders);
+                this.renderDeclinedOrders(orders);
+            } else {
+                console.error('Ошибка загрузки отказов:', response.status);
+                this.showAlert('Ошибка загрузки отказов', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки отказов:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    /**
+     * Загрузка отмененных заказов
+     */
+    async loadCancelledOrders() {
+        try {
+            console.log('Загружаем отмененные заказы...');
+            const response = await fetch('/api/orders?status=cancelled');
+            
+            if (response.ok) {
+                const orders = await response.json();
+                console.log('Получены отмененные заказы:', orders);
+                this.renderCancelledOrders(orders);
+            } else {
+                console.error('Ошибка загрузки отмененных заказов:', response.status);
+                this.showAlert('Ошибка загрузки отмененных заказов', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки отмененных заказов:', error);
+            this.showAlert('Ошибка соединения с сервером', 'danger');
+        }
+    }
+
+    /**
+     * Отображение отказов клиентов
+     * @param {Array} orders - Массив отказов
+     */
+    renderDeclinedOrders(orders) {
+        const container = document.getElementById('declinedOrdersList');
+        
+        if (orders.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">Отказов клиентов не найдено</p>';
+            return;
+        }
+
+        let html = '<div class="row">';
+        orders.forEach(order => {
+            html += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">${order.order_number}</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="${order.id}" onchange="toggleRestoreButton()">
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text"><strong>Клиент:</strong> ${order.client_name || 'Не указано'}</p>
+                            <p class="card-text"><strong>Телефон:</strong> ${order.client_phone || 'Не указано'}</p>
+                            <p class="card-text"><strong>Дата отказа:</strong> ${new Date(order.updated_at).toLocaleString('ru-RU')}</p>
+                            <p class="card-text"><strong>Описание:</strong> ${order.description || 'Не указано'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        container.innerHTML = html;
+    }
+
+    /**
+     * Отображение отмененных заказов
+     * @param {Array} orders - Массив отмененных заказов
+     */
+    renderCancelledOrders(orders) {
+        const container = document.getElementById('cancelledOrdersList');
+        
+        if (orders.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">Отмененных заказов не найдено</p>';
+            return;
+        }
+
+        let html = '<div class="row">';
+        orders.forEach(order => {
+            html += `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card border-secondary">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">${order.order_number}</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="${order.id}" onchange="toggleRestoreCancelledButton()">
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text"><strong>Клиент:</strong> ${order.client_name || 'Не указано'}</p>
+                            <p class="card-text"><strong>Телефон:</strong> ${order.client_phone || 'Не указано'}</p>
+                            <p class="card-text"><strong>Дата отмены:</strong> ${new Date(order.updated_at).toLocaleString('ru-RU')}</p>
+                            <p class="card-text"><strong>Описание:</strong> ${order.description || 'Не указано'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        
+        container.innerHTML = html;
+    }
+
+    /**
      * Загрузка данных профиля пользователя
      */
     async loadProfileData() {
@@ -1567,4 +1693,106 @@ document.addEventListener('DOMContentLoaded', () => {
 function addMeasurement() {
     console.log('Добавление нового замера');
     window.app.showAlert('Функция добавления замеров в разработке', 'info');
+}
+
+/**
+ * Переключение кнопки восстановления отказов
+ */
+function toggleRestoreButton() {
+    const checkboxes = document.querySelectorAll('#declinedOrdersList input[type="checkbox"]:checked');
+    const restoreBtn = document.getElementById('restoreBtn');
+    restoreBtn.disabled = checkboxes.length === 0;
+}
+
+/**
+ * Переключение кнопки восстановления отмененных заказов
+ */
+function toggleRestoreCancelledButton() {
+    const checkboxes = document.querySelectorAll('#cancelledOrdersList input[type="checkbox"]:checked');
+    const restoreBtn = document.getElementById('restoreCancelledBtn');
+    restoreBtn.disabled = checkboxes.length === 0;
+}
+
+/**
+ * Восстановление отказанного заказа
+ */
+async function restoreDeclinedOrder() {
+    const checkboxes = document.querySelectorAll('#declinedOrdersList input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        window.app.showAlert('Выберите заказы для восстановления', 'warning');
+        return;
+    }
+
+    const orderIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    try {
+        for (const orderId of orderIds) {
+            const response = await fetch(`/api/orders/${orderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'pending' })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка восстановления заказа ${orderId}`);
+            }
+        }
+
+        window.app.showAlert('Заказы успешно восстановлены!', 'success');
+        window.app.loadDeclinedOrders(); // Перезагружаем список
+    } catch (error) {
+        console.error('Ошибка восстановления заказов:', error);
+        window.app.showAlert('Ошибка восстановления заказов', 'danger');
+    }
+}
+
+/**
+ * Восстановление отмененного заказа
+ */
+async function restoreCancelledOrder() {
+    const checkboxes = document.querySelectorAll('#cancelledOrdersList input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+        window.app.showAlert('Выберите заказы для восстановления', 'warning');
+        return;
+    }
+
+    const orderIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    try {
+        for (const orderId of orderIds) {
+            const response = await fetch(`/api/orders/${orderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'pending' })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка восстановления заказа ${orderId}`);
+            }
+        }
+
+        window.app.showAlert('Заказы успешно восстановлены!', 'success');
+        window.app.loadCancelledOrders(); // Перезагружаем список
+    } catch (error) {
+        console.error('Ошибка восстановления заказов:', error);
+        window.app.showAlert('Ошибка восстановления заказов', 'danger');
+    }
+}
+
+/**
+ * Применение фильтров для отказов
+ */
+function applyDeclinedFilters() {
+    window.app.showAlert('Функция фильтрации отказов в разработке', 'info');
+}
+
+/**
+ * Применение фильтров для отмененных заказов
+ */
+function applyCancelledFilters() {
+    window.app.showAlert('Функция фильтрации отмененных заказов в разработке', 'info');
 }
