@@ -9,6 +9,7 @@ var app;
 // Немедленная инициализация для совместимости
 if (typeof window !== 'undefined') {
     window.app = null;
+    app = null;
 }
 
 class WindowRepairApp {
@@ -302,9 +303,16 @@ class WindowRepairApp {
 function waitForApp(callback) {
     if (app && app.ordersModule) {
         callback();
+    } else if (window.app && window.app.ordersModule) {
+        callback();
     } else {
         setTimeout(() => waitForApp(callback), 100);
     }
+}
+
+// Безопасный доступ к app
+function getApp() {
+    return app || window.app;
 }
 
 // Инициализация приложения после загрузки DOM
@@ -322,22 +330,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Глобальные функции для совместимости
+// Глобальные функции-обертки для совместимости
 function addMeasurement() {
-    if (app && app.workModule) {
-        app.workModule.addMeasurement();
-    } else if (window.app && window.app.workModule) {
-        window.app.workModule.addMeasurement();
+    const appInstance = getApp();
+    if (appInstance && appInstance.workModule) {
+        appInstance.workModule.addMeasurement();
     } else {
         console.error('Приложение не инициализировано');
     }
 }
 
 function searchAddressOnMap() {
-    if (app) {
-        app.showAlert('Карты временно отключены', 'info');
-    } else if (window.app) {
-        window.app.showAlert('Карты временно отключены', 'info');
+    const appInstance = getApp();
+    if (appInstance) {
+        appInstance.showAlert('Карты временно отключены', 'info');
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+}
+
+// Глобальные функции для кнопок навигации
+function showOrderCards(status) {
+    const appInstance = getApp();
+    if (appInstance && appInstance.ordersModule) {
+        appInstance.ordersModule.showOrderCards(status);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+}
+
+function viewOrderCard(orderId) {
+    const appInstance = getApp();
+    if (appInstance && appInstance.ordersModule) {
+        appInstance.ordersModule.viewOrderCard(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+}
+
+function startWork(orderId) {
+    const appInstance = getApp();
+    if (appInstance && appInstance.ordersModule) {
+        appInstance.ordersModule.startWork(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+}
+
+function declineOrder(orderId) {
+    const appInstance = getApp();
+    if (appInstance && appInstance.ordersModule) {
+        appInstance.ordersModule.declineOrder(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+}
+
+function cancelOrder(orderId) {
+    const appInstance = getApp();
+    if (appInstance && appInstance.ordersModule) {
+        appInstance.ordersModule.cancelOrder(orderId);
     } else {
         console.error('Приложение не инициализировано');
     }

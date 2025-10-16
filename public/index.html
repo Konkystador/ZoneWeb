@@ -142,16 +142,16 @@
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newOrderModal">
                                 <i class="fas fa-plus"></i> Новый заказ
                             </button>
-                            <button class="btn btn-success" onclick="app.ordersModule.showOrderCards('pending')">
+                            <button class="btn btn-success" onclick="showOrderCards('pending')">
                                 <i class="fas fa-clock"></i> Предстоящие заказы
                             </button>
-                            <button class="btn btn-info" onclick="app.ordersModule.showOrderCards('in_progress')">
+                            <button class="btn btn-info" onclick="showOrderCards('in_progress')">
                                 <i class="fas fa-tools"></i> В работе
                             </button>
-                            <button class="btn btn-warning" onclick="app.ordersModule.showOrderCards('declined')">
+                            <button class="btn btn-warning" onclick="showOrderCards('declined')">
                                 <i class="fas fa-times-circle"></i> Отказы
                             </button>
-                            <button class="btn btn-secondary" onclick="app.ordersModule.showOrderCards('cancelled')">
+                            <button class="btn btn-secondary" onclick="showOrderCards('cancelled')">
                                 <i class="fas fa-trash"></i> Корзина
                             </button>
                         </div>
@@ -1023,13 +1023,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Модули приложения -->
-    <script src="js/modules/auth.js?v=3"></script>
-    <script src="js/modules/orders.js?v=3"></script>
-    <script src="js/modules/work.js?v=3"></script>
+    <script src="js/modules/auth.js?v=4"></script>
+    <script src="js/modules/orders.js?v=4"></script>
+    <script src="js/modules/work.js?v=4"></script>
     
     <!-- Основное приложение -->
-    <script src="js/app-new.js?v=4"></script>
-    <script src="js/estimate.js?v=3"></script>
-    <script src="js/pdf-export.js?v=3"></script>
+    <script src="js/app-new.js?v=5"></script>
+    <script src="js/estimate.js?v=4"></script>
+    <script src="js/pdf-export.js?v=4"></script>
 </body>
 </html>

@@ -140,16 +140,16 @@ class OrdersModule {
                             <i class="fas fa-user"></i> ${order.assigned_name || 'Не назначен'}
                         </p>
                         <div class="btn-group w-100" role="group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="app.ordersModule.viewOrderCard(${order.id})" title="Просмотр/редактирование">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
                                 <i class="fas fa-eye"></i> Просмотр
                             </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="app.ordersModule.startWork(${order.id})" title="Начать работу">
+                            <button class="btn btn-sm btn-outline-success" onclick="startWork(${order.id})" title="Начать работу">
                                 <i class="fas fa-play"></i> В работу
                             </button>
-                            <button class="btn btn-sm btn-outline-warning" onclick="app.ordersModule.declineOrder(${order.id})" title="Отказ клиента">
+                            <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
                                 <i class="fas fa-ban"></i> Отказ
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="app.ordersModule.cancelOrder(${order.id})" title="Отменить заказ">
+                            <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
                                 <i class="fas fa-times"></i> Отмена
                             </button>
                         </div>
@@ -421,13 +421,13 @@ class OrdersModule {
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                            <button type="button" class="btn btn-success" onclick="app.ordersModule.startWork(${order.id})" data-bs-dismiss="modal">
+                            <button type="button" class="btn btn-success" onclick="startWork(${order.id})" data-bs-dismiss="modal">
                                 <i class="fas fa-play"></i> В работу
                             </button>
-                            <button type="button" class="btn btn-warning" onclick="app.ordersModule.declineOrder(${order.id})" data-bs-dismiss="modal">
+                            <button type="button" class="btn btn-warning" onclick="declineOrder(${order.id})" data-bs-dismiss="modal">
                                 <i class="fas fa-ban"></i> Отказ
                             </button>
-                            <button type="button" class="btn btn-danger" onclick="app.ordersModule.cancelOrder(${order.id})" data-bs-dismiss="modal">
+                            <button type="button" class="btn btn-danger" onclick="cancelOrder(${order.id})" data-bs-dismiss="modal">
                                 <i class="fas fa-times"></i> Отмена
                             </button>
                         </div>
