@@ -217,6 +217,317 @@ body {
     .table-responsive {
         font-size: 0.875rem;
     }
+    
+    /* Улучшения для мобильных устройств */
+    .navbar-nav {
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    .navbar-nav .nav-link {
+        margin: 0.25rem 0;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 0.5rem;
+        border-radius: 8px !important;
+        width: 100%;
+    }
+    
+    .table td, .table th {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .form-control, .form-select {
+        font-size: 16px; /* Предотвращает зум на iOS */
+        padding: 0.75rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+    }
+    
+    .card-text {
+        font-size: 0.9rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Скрываем некоторые колонки в таблицах на мобильных */
+    .d-none-mobile {
+        display: none !important;
+    }
+    
+    /* Улучшаем отображение карточек заказов */
+    .order-card {
+        margin-bottom: 1rem;
+    }
+    
+    .order-card .card-body {
+        padding: 0.75rem;
+    }
+    
+    .order-card .btn-group {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .order-card .btn {
+        margin: 0.25rem 0;
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    /* Улучшения для карт */
+    #map {
+        height: 250px !important;
+    }
+    
+    /* Улучшения для вкладок */
+    .nav-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .nav-tabs .nav-link {
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    /* Улучшения для форм */
+    .form-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    /* Улучшения для модальных окон */
+    .modal-header h5 {
+        font-size: 1.1rem;
+    }
+    
+    /* Улучшения для алертов */
+    .alert {
+        font-size: 0.875rem;
+        padding: 0.75rem;
+    }
+}
+
+/* Стили для планшетов */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .card-columns {
+        column-count: 2;
+    }
+    
+    .btn-group .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    #map {
+        height: 350px !important;
+    }
+}
+
+/* Стили для больших экранов */
+@media (min-width: 1200px) {
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .card-columns {
+        column-count: 3;
+    }
+    
+    .table-responsive {
+        font-size: 1rem;
+    }
+    
+    #map {
+        height: 400px !important;
+    }
+}
+
+/* Дополнительные улучшения */
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
+}
+
+.nav-link {
+    transition: color 0.15s ease-in-out;
+}
+
+.nav-link:hover {
+    color: #0056b3 !important;
+}
+
+.modal-content {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 500;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 500;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.alert-dismissible .btn-close {
+    padding: 0.75rem 1rem;
+}
+
+#map {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.nav-tabs .nav-link {
+    border-radius: 0.5rem 0.5rem 0 0;
+    margin-right: 0.25rem;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.input-group .form-control:focus {
+    z-index: 3;
+}
+
+.input-group .btn {
+    z-index: 2;
+}
+
+/* Улучшения для статусов */
+.status-badge {
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-in_progress {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-declined {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 /* Загрузка */
