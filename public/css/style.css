@@ -1002,7 +1002,6 @@ textarea.form-control {
 /* 3D карточки заказов */
 .order-card-3d {
     position: relative;
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
     border: 1px solid #e0e0e0;
     border-radius: 12px;
     box-shadow: 
@@ -1010,6 +1009,19 @@ textarea.form-control {
         inset 1px 1px 2px rgba(255,255,255,0.5);
     transition: all 0.3s ease;
     overflow: hidden;
+}
+
+/* Убираем background для карточек с цветными фонами */
+.order-card-3d.bg-primary,
+.order-card-3d.bg-success,
+.order-card-3d.bg-warning,
+.order-card-3d.bg-info {
+    background: inherit !important; /* Используем Bootstrap цвет */
+}
+
+/* Добавляем 3D эффект только для карточек без цветного фона */
+.order-card-3d:not(.bg-primary):not(.bg-success):not(.bg-warning):not(.bg-info) {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
 }
 
 .order-card-3d:hover {
@@ -1028,6 +1040,13 @@ textarea.form-control {
     height: 4px;
     background: linear-gradient(90deg, var(--primary-green), var(--accent-green));
     border-radius: 12px 12px 0 0;
+    z-index: 1;
+}
+
+/* Обеспечиваем видимость текста */
+.order-card-3d .card-body {
+    position: relative;
+    z-index: 2;
 }
 
 /* 3D модальные окна */
