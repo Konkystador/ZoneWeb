@@ -491,38 +491,79 @@ function testMainAppPage() {
         // Проверяем, находимся ли мы на странице тестов
         const isTestPage = window.location.href.includes('/tests/');
         console.log('📍 Страница тестов:', isTestPage ? 'да' : 'нет');
+        console.log('📍 Текущий URL:', window.location.href);
         
         if (isTestPage) {
             console.log('⚠️ Тесты запущены на странице тестов, а не на основной странице приложения');
-            console.log('📍 Рекомендация: запустить тесты на основной странице http://188.120.240.71/');
+            console.log('📍 Рекомендация: использовать http://188.120.240.71/tests/main-app-tests.html для тестирования основной страницы');
             
             // Пытаемся загрузить основную страницу через iframe
             const iframe = document.createElement('iframe');
-            iframe.src = '../public/index.html';
+            iframe.src = 'http://188.120.240.71/';
             iframe.style.display = 'none';
+            iframe.style.width = '100%';
+            iframe.style.height = '600px';
+            iframe.style.border = '2px solid #e9ecef';
+            iframe.style.borderRadius = '10px';
             document.body.appendChild(iframe);
             
             return new Promise((resolve) => {
+                const timeout = setTimeout(() => {
+                    console.log('❌ Таймаут загрузки основной страницы в iframe');
+                    if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                    }
+                    logTest('Основная страница', false, 'Таймаут загрузки основной страницы');
+                    resolve(false);
+                }, 15000);
+                
                 iframe.onload = () => {
+                    clearTimeout(timeout);
                     console.log('✅ Основная страница загружена в iframe');
-                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                    const mainApp = iframeDoc.getElementById('mainApp');
-                    const loginScreen = iframeDoc.getElementById('loginScreen');
                     
-                    console.log('📍 mainApp в iframe:', mainApp ? 'найден' : 'не найден');
-                    console.log('📍 loginScreen в iframe:', loginScreen ? 'найден' : 'не найден');
-                    
-                    document.body.removeChild(iframe);
-                    
-                    const success = !!(mainApp || loginScreen);
-                    logTest('Основная страница', success, 
-                        `Страница тестов: ${isTestPage}, элементы в iframe: ${success ? 'найдены' : 'не найдены'}`);
-                    resolve(success);
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const mainApp = iframeDoc.getElementById('mainApp');
+                        const loginScreen = iframeDoc.getElementById('loginScreen');
+                        
+                        console.log('📍 mainApp в iframe:', mainApp ? 'найден' : 'не найден');
+                        console.log('📍 loginScreen в iframe:', loginScreen ? 'найден' : 'не найден');
+                        
+                        // Проверяем наличие скриптов
+                        const scripts = Array.from(iframeDoc.scripts);
+                        const appScript = scripts.find(script => 
+                            script.src && script.src.includes('app-simple.js')
+                        );
+                        console.log('📍 app-simple.js в iframe:', appScript ? 'найден' : 'не найден');
+                        
+                        // Проверяем глобальную переменную app
+                        const app = iframe.contentWindow.app;
+                        console.log('📍 window.app в iframe:', app ? 'найден' : 'не найден');
+                        
+                        if (document.body.contains(iframe)) {
+                            document.body.removeChild(iframe);
+                        }
+                        
+                        const success = !!(mainApp || loginScreen);
+                        logTest('Основная страница', success, 
+                            `Страница тестов: ${isTestPage}, элементы в iframe: ${success ? 'найдены' : 'не найдены'}, скрипт: ${appScript ? 'да' : 'нет'}, app: ${app ? 'да' : 'нет'}`);
+                        resolve(success);
+                    } catch (error) {
+                        console.log('❌ Ошибка доступа к iframe:', error.message);
+                        if (document.body.contains(iframe)) {
+                            document.body.removeChild(iframe);
+                        }
+                        logTest('Основная страница', false, `Ошибка доступа к iframe: ${error.message}`);
+                        resolve(false);
+                    }
                 };
                 
                 iframe.onerror = () => {
+                    clearTimeout(timeout);
                     console.log('❌ Ошибка загрузки основной страницы в iframe');
-                    document.body.removeChild(iframe);
+                    if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                    }
                     logTest('Основная страница', false, 'Ошибка загрузки основной страницы');
                     resolve(false);
                 };
@@ -536,9 +577,20 @@ function testMainAppPage() {
             console.log('📍 mainApp:', mainApp ? 'найден' : 'не найден');
             console.log('📍 loginScreen:', loginScreen ? 'найден' : 'не найден');
             
+            // Проверяем наличие скриптов
+            const scripts = Array.from(document.scripts);
+            const appScript = scripts.find(script => 
+                script.src && script.src.includes('app-simple.js')
+            );
+            console.log('📍 app-simple.js:', appScript ? 'найден' : 'не найден');
+            
+            // Проверяем глобальную переменную app
+            const app = window.app;
+            console.log('📍 window.app:', app ? 'найден' : 'не найден');
+            
             const success = !!(mainApp || loginScreen);
             logTest('Основная страница', success, 
-                `Основная страница: ${!isTestPage}, элементы: ${success ? 'найдены' : 'не найдены'}`);
+                `Основная страница: ${!isTestPage}, элементы: ${success ? 'найдены' : 'не найдены'}, скрипт: ${appScript ? 'да' : 'нет'}, app: ${app ? 'да' : 'нет'}`);
             return success;
         }
     } catch (error) {
