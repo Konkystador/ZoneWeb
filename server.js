@@ -95,8 +95,10 @@ db.serialize(() => {
     full_name TEXT,
     phone TEXT,
     telegram TEXT,
+    manager_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT 1
+    is_active BOOLEAN DEFAULT 1,
+    FOREIGN KEY (manager_id) REFERENCES users(id)
   )`);
 
   // Roles table
@@ -413,22 +415,52 @@ app.get('/api/user', requireAuth, (req, res) => {
 
 // Orders routes
 app.get('/api/orders', requireAuth, (req, res) => {
-  let query = 'SELECT o.*, u.full_name as assigned_name FROM orders o LEFT JOIN users u ON o.assigned_to = u.id';
+  let query = `SELECT o.*, 
+    u.full_name as assigned_name,
+    creator.full_name as created_by_name,
+    assigner.full_name as assigned_by_name
+    FROM orders o 
+    LEFT JOIN users u ON o.assigned_to = u.id
+    LEFT JOIN users creator ON o.created_by = creator.id
+    LEFT JOIN users assigner ON o.assigned_to = assigner.id`;
   let params = [];
+  let whereConditions = [];
   
-  // Filter by role
-  if (req.session.userRole === 'worker') {
-    query += ' WHERE o.assigned_to = ?';
-    params.push(req.session.userId);
+  // Filter by role hierarchy
+  if (req.session.userRole === 'admin') {
+    // Администратор видит все заказы
+    // Никаких дополнительных условий
+  } else if (req.session.userRole === 'senior_manager') {
+    // Старший менеджер видит свои заказы, назначенные им, и заказы своих подчиненных
+    whereConditions.push(`(o.created_by = ? OR o.assigned_to = ? OR o.created_by IN (
+      SELECT id FROM users WHERE manager_id = ? OR id IN (
+        SELECT id FROM users WHERE manager_id IN (
+          SELECT id FROM users WHERE manager_id = ?
+        )
+      )
+    ))`);
+    params.push(req.session.userId, req.session.userId, req.session.userId, req.session.userId);
   } else if (req.session.userRole === 'manager') {
-    query += ' WHERE o.assigned_to = ? OR o.created_by = ?';
+    // Менеджер видит свои заказы, назначенные ему, и заказы своих подчиненных
+    whereConditions.push(`(o.created_by = ? OR o.assigned_to = ? OR o.created_by IN (
+      SELECT id FROM users WHERE manager_id = ?
+    ))`);
+    params.push(req.session.userId, req.session.userId, req.session.userId);
+  } else if (req.session.userRole === 'worker') {
+    // Работник видит только свои заказы и назначенные ему
+    whereConditions.push('(o.created_by = ? OR o.assigned_to = ?)');
     params.push(req.session.userId, req.session.userId);
+  }
+  
+  if (whereConditions.length > 0) {
+    query += ' WHERE ' + whereConditions.join(' OR ');
   }
   
   query += ' ORDER BY o.created_at DESC';
   
   db.all(query, params, (err, orders) => {
     if (err) {
+      console.error('Ошибка получения заказов:', err);
       return res.status(500).json({ error: 'Ошибка получения заказов' });
     }
     res.json(orders);
@@ -461,6 +493,9 @@ app.post('/api/orders', requireAuth, (req, res) => {
         return res.status(500).json({ error: 'Ошибка обновления номера заказа' });
       }
       
+      // Если исполнитель не указан, назначаем создателя заказа
+      const finalAssignedTo = assigned_to || req.session.userId;
+      
       db.run(`INSERT INTO orders (
         order_number, client_name, client_phone, client_telegram, address, city, street,
         house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
@@ -468,7 +503,7 @@ app.post('/api/orders', requireAuth, (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [orderNumber, client_name, client_phone, client_telegram, address, city, street,
        house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
-       visit_date, assigned_to, req.session.userId],
+       visit_date, finalAssignedTo, req.session.userId],
       function(err) {
         if (err) {
           return res.status(500).json({ error: 'Ошибка создания заказа' });
@@ -505,7 +540,7 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
   const { status } = req.body;
   
   // Проверяем, что статус валидный
-  const validStatuses = ['pending', 'in_progress', 'completed', 'cancelled', 'declined'];
+  const validStatuses = ['pending', 'in_progress', 'estimate_sent', 'completed', 'cancelled', 'declined'];
   if (!validStatuses.includes(status)) {
     return res.status(400).json({ error: 'Недопустимый статус заказа' });
   }
@@ -914,14 +949,37 @@ app.delete('/api/users/:id', requireAuth, requireRole(['admin']), (req, res) => 
   });
 });
 
-// Get users for assignment dropdown
+// Get users for assignment dropdown based on hierarchy
 app.get('/api/users/assignable', requireAuth, (req, res) => {
-  const query = `SELECT id, username, full_name, role FROM users 
-                 WHERE is_active = 1 AND role IN ('worker', 'manager', 'senior_manager') 
-                 ORDER BY role, full_name`;
+  let query = 'SELECT id, username, full_name, role FROM users WHERE is_active = 1';
+  let params = [];
+  let whereConditions = [];
   
-  db.all(query, (err, users) => {
+  // Filter by role hierarchy
+  if (req.session.userRole === 'admin') {
+    // Администратор может назначать всем
+    // Никаких дополнительных условий
+  } else if (req.session.userRole === 'senior_manager') {
+    // Старший менеджер может назначать всем менеджерам и работникам
+    whereConditions.push('role IN ("manager", "worker")');
+  } else if (req.session.userRole === 'manager') {
+    // Менеджер может назначать только своим подчиненным
+    whereConditions.push('(id = ? OR manager_id = ?)');
+    params.push(req.session.userId, req.session.userId);
+  } else if (req.session.userRole === 'worker') {
+    // Работник не может назначать никому
+    return res.json([]);
+  }
+  
+  if (whereConditions.length > 0) {
+    query += ' AND ' + whereConditions.join(' AND ');
+  }
+  
+  query += ' ORDER BY role, full_name';
+  
+  db.all(query, params, (err, users) => {
     if (err) {
+      console.error('Ошибка получения пользователей для назначения:', err);
       return res.status(500).json({ error: 'Ошибка получения пользователей' });
     }
     res.json(users);

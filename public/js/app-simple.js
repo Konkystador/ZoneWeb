@@ -194,13 +194,9 @@ async function loadOrders() {
             orders = await response.json();
             console.log('Получены заказы:', orders);
             
-            // По умолчанию показываем только заказы "ожидание" и "в работе"
-            const defaultFilteredOrders = orders.filter(order => 
-                order.status === 'pending' || order.status === 'in_progress'
-            );
-            
-            renderOrderCards(defaultFilteredOrders);
-            console.log('Заказы отображены в интерфейсе (фильтр по умолчанию)');
+            // На главной странице показываем все заказы без фильтрации
+            renderOrderCards(orders);
+            console.log('Заказы отображены в интерфейсе (главная страница)');
         } else {
             console.error('Ошибка загрузки заказов:', response.status);
             showAlert('Ошибка загрузки заказов', 'danger');
@@ -383,6 +379,8 @@ function createOrderCardHtml(order) {
                         <i class="fas fa-phone"></i> ${order.client_phone}<br>
                         <i class="fas fa-calendar"></i> ${order.visit_date ? new Date(order.visit_date).toLocaleString('ru-RU') : 'Не указано'}<br>
                         <i class="fas fa-user"></i> ${order.assigned_name || 'Не назначен'}
+                        ${order.created_by_name && order.created_by_name !== order.assigned_name ? 
+                          `<br><small class="text-muted"><i class="fas fa-user-plus"></i> Создал: ${order.created_by_name}</small>` : ''}
                     </p>
                     ${actionButtonsHtml}
                 </div>
@@ -580,6 +578,7 @@ function getStatusColor(status) {
     const colors = {
         'pending': 'bg-warning',
         'in_progress': 'bg-info',
+        'estimate_sent': 'bg-primary',
         'completed': 'bg-success',
         'cancelled': 'bg-secondary',
         'declined': 'bg-danger'
@@ -591,7 +590,8 @@ function getStatusText(status) {
     const statuses = {
         'pending': 'Предстоящий',
         'in_progress': 'В работе',
-        'completed': 'Завершен',
+        'estimate_sent': 'Смета отправлена',
+        'completed': 'Выполнено',
         'cancelled': 'Отменен',
         'declined': 'Отказ'
     };
