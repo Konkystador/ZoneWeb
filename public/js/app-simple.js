@@ -50,11 +50,20 @@ class WindowRepairApp {
 
     setupRoleBasedUI() {
         const adminElements = document.querySelectorAll('[id*="admin"]');
+        const testingElements = document.querySelectorAll('[id*="testing"]');
         const isAdmin = this.currentUser.role === 'admin';
         
         adminElements.forEach(element => {
             element.style.display = isAdmin ? 'block' : 'none';
         });
+        
+        testingElements.forEach(element => {
+            element.style.display = isAdmin ? 'block' : 'none';
+        });
+        
+        console.log('Настройка UI для роли:', this.currentUser.role);
+        console.log('Админ элементы:', adminElements.length);
+        console.log('Тестирование элементы:', testingElements.length);
     }
 
     // ==================== ТЕСТИРОВАНИЕ ====================
@@ -411,6 +420,10 @@ function loadPageData(pageName) {
             break;
         case 'cancelled':
             showOrderCards('cancelled');
+            break;
+        case 'testing':
+            // Страница тестирования не требует предварительной загрузки
+            console.log('Открыта страница тестирования');
             break;
     }
 }
@@ -2091,16 +2104,23 @@ window.showOrderCards = function(status) {
 };
 
 window.viewOrderCard = function(orderId) {
-    if (window.app && window.app.viewOrderCard) {
+    console.log('viewOrderCard вызвана, orderId:', orderId);
+    console.log('window.app:', window.app);
+    
+    if (window.app && typeof window.app.viewOrderCard === 'function') {
+        console.log('Вызываем app.viewOrderCard');
         window.app.viewOrderCard(orderId);
     } else {
-        console.error('Приложение не инициализировано');
+        console.error('Приложение не инициализировано или метод не найден');
         // Попытка повторной инициализации
         setTimeout(() => {
-            if (window.app && window.app.viewOrderCard) {
+            if (window.app && typeof window.app.viewOrderCard === 'function') {
+                console.log('Повторная попытка - вызываем app.viewOrderCard');
                 window.app.viewOrderCard(orderId);
+            } else {
+                console.error('Повторная попытка не удалась');
             }
-        }, 100);
+        }, 500);
     }
 };
 
