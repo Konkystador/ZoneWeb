@@ -599,7 +599,7 @@ app.delete('/api/orders/:id', requireAuth, (req, res) => {
 // Update user
 app.put('/api/users/:id', requireAuth, (req, res) => {
   const userId = req.params.id;
-  const { username, full_name, role, password } = req.body;
+  const { username, full_name, role, password, manager_id } = req.body;
   
   // Проверяем права доступа (только админ может редактировать пользователей)
   if (req.session.userRole !== 'admin') {
@@ -611,8 +611,8 @@ app.put('/api/users/:id', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'Нельзя редактировать собственный профиль через админку' });
   }
   
-  let updateQuery = 'UPDATE users SET username = ?, full_name = ?, role = ?';
-  let updateParams = [username, full_name, role];
+  let updateQuery = 'UPDATE users SET username = ?, full_name = ?, role = ?, manager_id = ?';
+  let updateParams = [username, full_name, role, manager_id || null];
   
   // Добавляем пароль, если он указан
   if (password && password.trim()) {
@@ -1164,6 +1164,119 @@ app.get('/api/estimate/:id/pdf', requireAuth, (req, res) => {
     });
   });
 });
+
+// Get user hierarchy
+app.get('/api/users/:id/hierarchy', requireAuth, (req, res) => {
+  const userId = req.params.id;
+  
+  // Получаем информацию о пользователе и его подчиненных
+  const query = `
+    WITH RECURSIVE user_hierarchy AS (
+      SELECT id, username, full_name, role, manager_id, 0 as level
+      FROM users 
+      WHERE id = ?
+      
+      UNION ALL
+      
+      SELECT u.id, u.username, u.full_name, u.role, u.manager_id, uh.level + 1
+      FROM users u
+      INNER JOIN user_hierarchy uh ON u.manager_id = uh.id
+    )
+    SELECT * FROM user_hierarchy ORDER BY level, full_name
+  `;
+  
+  db.all(query, [userId], (err, rows) => {
+    if (err) {
+      console.error('Ошибка получения иерархии:', err);
+      return res.status(500).json({ error: 'Ошибка получения иерархии' });
+    }
+    
+    // Строим дерево иерархии
+    const hierarchy = buildHierarchyTree(rows);
+    res.json(hierarchy);
+  });
+});
+
+// Update user hierarchy
+app.put('/api/users/:id/hierarchy', requireAuth, (req, res) => {
+  const userId = req.params.id;
+  const { manager_id } = req.body;
+  
+  // Проверяем права доступа (только админ может управлять иерархией)
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Недостаточно прав для управления иерархией' });
+  }
+  
+  // Проверяем, что не создается циклическая зависимость
+  if (manager_id) {
+    const checkQuery = 'SELECT id FROM users WHERE manager_id = ? AND id = ?';
+    db.get(checkQuery, [userId, manager_id], (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: 'Ошибка проверки иерархии' });
+      }
+      
+      if (row) {
+        return res.status(400).json({ error: 'Невозможно назначить подчиненного в качестве менеджера' });
+      }
+      
+      // Обновляем иерархию
+      updateUserHierarchy(userId, manager_id, res);
+    });
+  } else {
+    // Убираем менеджера
+    updateUserHierarchy(userId, null, res);
+  }
+});
+
+// Helper function to update user hierarchy
+function updateUserHierarchy(userId, managerId, res) {
+  db.run('UPDATE users SET manager_id = ? WHERE id = ?', [managerId, userId], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Ошибка обновления иерархии' });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    res.json({ success: true, message: 'Иерархия обновлена' });
+  });
+}
+
+// Helper function to build hierarchy tree
+function buildHierarchyTree(rows) {
+  if (rows.length === 0) return null;
+  
+  const userMap = new Map();
+  let root = null;
+  
+  // Создаем карту пользователей
+  rows.forEach(row => {
+    userMap.set(row.id, {
+      id: row.id,
+      username: row.username,
+      full_name: row.full_name,
+      role: row.role,
+      manager_id: row.manager_id,
+      subordinates: []
+    });
+  });
+  
+  // Строим дерево
+  rows.forEach(row => {
+    const user = userMap.get(row.id);
+    if (row.level === 0) {
+      root = user;
+    } else if (user.manager_id) {
+      const manager = userMap.get(user.manager_id);
+      if (manager) {
+        manager.subordinates.push(user);
+      }
+    }
+  });
+  
+  return root;
+}
 
 // Start server
 app.listen(PORT, () => {

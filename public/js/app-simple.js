@@ -346,22 +346,61 @@ function createOrderCardHtml(order) {
         }
     } else {
         // Обычные кнопки для активных заказов
-        actionButtonsHtml = `
-            <div class="btn-group w-100" role="group">
-                <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
-                    <i class="fas fa-eye"></i> Просмотр
-                </button>
-                <button class="btn btn-sm btn-outline-success" onclick="startWork(${order.id})" title="Начать работу">
-                    <i class="fas fa-play"></i> В работу
-                </button>
-                <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
-                    <i class="fas fa-ban"></i> Отказ
-                </button>
-                <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
-                    <i class="fas fa-times"></i> Отмена
-                </button>
-            </div>
-        `;
+        if (order.status === 'in_progress') {
+            actionButtonsHtml = `
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
+                        <i class="fas fa-eye"></i> Просмотр
+                    </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="sendEstimate(${order.id})" title="Отправить смету">
+                        <i class="fas fa-paper-plane"></i> Смета отправлена
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="completeOrder(${order.id})" title="Завершить заказ">
+                        <i class="fas fa-check"></i> Выполнено
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
+                        <i class="fas fa-ban"></i> Отказ
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                </div>
+            `;
+        } else if (order.status === 'estimate_sent') {
+            actionButtonsHtml = `
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
+                        <i class="fas fa-eye"></i> Просмотр
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="completeOrder(${order.id})" title="Завершить заказ">
+                        <i class="fas fa-check"></i> Выполнено
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
+                        <i class="fas fa-ban"></i> Отказ
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                </div>
+            `;
+        } else {
+            actionButtonsHtml = `
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
+                        <i class="fas fa-eye"></i> Просмотр
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="startWork(${order.id})" title="Начать работу">
+                        <i class="fas fa-play"></i> В работу
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
+                        <i class="fas fa-ban"></i> Отказ
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                </div>
+            `;
+        }
     }
     
     return `
@@ -986,6 +1025,68 @@ function searchAddressOnMap() {
     showAlert('Карты временно отключены', 'info');
 }
 
+// ==================== НОВЫЕ ФУНКЦИИ УПРАВЛЕНИЯ ЗАКАЗАМИ ====================
+
+// Отправить смету
+async function sendEstimate(orderId) {
+    if (!confirm('Отметить заказ как "Смета отправлена"?')) {
+        return;
+    }
+    
+    try {
+        console.log('Отправляем смету для заказа:', orderId);
+        
+        const response = await fetch(`/api/orders/${orderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: 'estimate_sent' })
+        });
+        
+        if (response.ok) {
+            showAlert('Заказ отмечен как "Смета отправлена"', 'success');
+            loadOrders(); // Перезагружаем список заказов
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Ошибка обновления статуса', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка отправки сметы:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Завершить заказ
+async function completeOrder(orderId) {
+    if (!confirm('Отметить заказ как "Выполнено" и переместить в архив?')) {
+        return;
+    }
+    
+    try {
+        console.log('Завершаем заказ:', orderId);
+        
+        const response = await fetch(`/api/orders/${orderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: 'completed' })
+        });
+        
+        if (response.ok) {
+            showAlert('Заказ завершен и перемещен в архив', 'success');
+            loadOrders(); // Перезагружаем список заказов
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Ошибка обновления статуса', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка завершения заказа:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
 // ==================== УПРАВЛЕНИЕ ЗАКАЗАМИ (УДАЛЕНИЕ/ВОССТАНОВЛЕНИЕ) ====================
 
 // Показать/скрыть кнопки управления
@@ -1190,6 +1291,7 @@ function createUser() {
     const password = document.getElementById('userPassword').value;
     const fullName = document.getElementById('newFullName').value;
     const role = document.getElementById('newUserRole').value;
+    const managerId = document.getElementById('newUserManager').value;
     
     if (!username || !password) {
         showAlert('Заполните обязательные поля', 'warning');
@@ -1200,7 +1302,8 @@ function createUser() {
         username: username,
         password: password,
         full_name: fullName,
-        role: role
+        role: role,
+        manager_id: managerId || null
     };
     
     console.log('Создание пользователя:', userData);
@@ -1231,6 +1334,172 @@ function createUser() {
         console.error('Ошибка создания пользователя:', error);
         showAlert('Ошибка соединения с сервером', 'danger');
     });
+}
+
+// ==================== УПРАВЛЕНИЕ ИЕРАРХИЕЙ ====================
+
+// Обновить опции менеджеров при выборе роли
+function updateManagerOptions() {
+    const role = document.getElementById('newUserRole').value;
+    const managerDiv = document.getElementById('managerSelectDiv');
+    const managerSelect = document.getElementById('newUserManager');
+    
+    if (role === 'worker' || role === 'manager') {
+        managerDiv.style.display = 'block';
+        loadManagerOptions(managerSelect, role);
+    } else {
+        managerDiv.style.display = 'none';
+    }
+}
+
+// Загрузить опции менеджеров
+async function loadManagerOptions(selectElement, role) {
+    try {
+        const response = await fetch('/api/users/assignable');
+        const users = await response.json();
+        
+        selectElement.innerHTML = '<option value="">Без менеджера</option>';
+        
+        // Фильтруем пользователей в зависимости от роли
+        const availableManagers = users.filter(user => {
+            if (role === 'worker') {
+                return user.role === 'manager' || user.role === 'senior_manager';
+            } else if (role === 'manager') {
+                return user.role === 'senior_manager';
+            }
+            return false;
+        });
+        
+        availableManagers.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = `${user.full_name || user.username} (${getRoleText(user.role)})`;
+            selectElement.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки менеджеров:', error);
+    }
+}
+
+// Показать менеджер иерархии
+function showHierarchyManager() {
+    const modal = new bootstrap.Modal(document.getElementById('hierarchyModal'));
+    loadHierarchyUsers();
+    modal.show();
+}
+
+// Загрузить пользователей для управления иерархией
+async function loadHierarchyUsers() {
+    try {
+        const response = await fetch('/api/users');
+        const users = await response.json();
+        
+        const userSelect = document.getElementById('hierarchyUserSelect');
+        const managerSelect = document.getElementById('hierarchyManagerSelect');
+        
+        // Заполняем список пользователей
+        userSelect.innerHTML = '<option value="">Выберите пользователя</option>';
+        managerSelect.innerHTML = '<option value="">Без менеджера</option>';
+        
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = `${user.full_name || user.username} (${getRoleText(user.role)})`;
+            userSelect.appendChild(option);
+            
+            // Для менеджеров добавляем в список доступных менеджеров
+            if (user.role === 'manager' || user.role === 'senior_manager') {
+                const managerOption = document.createElement('option');
+                managerOption.value = user.id;
+                managerOption.textContent = `${user.full_name || user.username} (${getRoleText(user.role)})`;
+                managerSelect.appendChild(managerOption);
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки пользователей:', error);
+        showAlert('Ошибка загрузки пользователей', 'danger');
+    }
+}
+
+// Загрузить иерархию пользователя
+async function loadUserHierarchy() {
+    const userId = document.getElementById('hierarchyUserSelect').value;
+    if (!userId) {
+        document.getElementById('hierarchyInfo').style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${userId}/hierarchy`);
+        const hierarchy = await response.json();
+        
+        const hierarchyTree = document.getElementById('hierarchyTree');
+        hierarchyTree.innerHTML = buildHierarchyTree(hierarchy);
+        document.getElementById('hierarchyInfo').style.display = 'block';
+    } catch (error) {
+        console.error('Ошибка загрузки иерархии:', error);
+    }
+}
+
+// Построить дерево иерархии
+function buildHierarchyTree(hierarchy) {
+    let html = '<ul class="list-unstyled">';
+    
+    function buildNode(node, level = 0) {
+        const indent = '&nbsp;'.repeat(level * 4);
+        html += `<li>${indent}${node.full_name || node.username} (${getRoleText(node.role)})</li>`;
+        
+        if (node.subordinates && node.subordinates.length > 0) {
+            node.subordinates.forEach(sub => buildNode(sub, level + 1));
+        }
+    }
+    
+    buildNode(hierarchy);
+    html += '</ul>';
+    return html;
+}
+
+// Обновить иерархию пользователя
+async function updateUserHierarchy() {
+    const userId = document.getElementById('hierarchyUserSelect').value;
+    const managerId = document.getElementById('hierarchyManagerSelect').value;
+    
+    if (!userId) {
+        showAlert('Выберите пользователя', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${userId}/hierarchy`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ manager_id: managerId || null })
+        });
+        
+        if (response.ok) {
+            showAlert('Иерархия обновлена', 'success');
+            loadUserHierarchy(); // Обновляем отображение
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Ошибка обновления иерархии', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка обновления иерархии:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Получить текст роли
+function getRoleText(role) {
+    const roles = {
+        'admin': 'Администратор',
+        'senior_manager': 'Старший менеджер',
+        'manager': 'Менеджер',
+        'worker': 'Работник'
+    };
+    return roles[role] || role;
 }
 
 // ==================== НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ ====================
