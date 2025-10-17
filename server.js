@@ -84,8 +84,20 @@ const upload = multer({
 // Database initialization
 const db = new sqlite3.Database('window_repair.db');
 
-// Create tables
-db.serialize(() => {
+  // Create tables
+  db.serialize(() => {
+    // Удаляем неиспользуемые поля координат из таблицы orders (если они существуют)
+    db.run(`ALTER TABLE orders DROP COLUMN latitude`, (err) => {
+      if (err && !err.message.includes('no such column')) {
+        console.error('Ошибка удаления поля latitude:', err);
+      }
+    });
+    
+    db.run(`ALTER TABLE orders DROP COLUMN longitude`, (err) => {
+      if (err && !err.message.includes('no such column')) {
+        console.error('Ошибка удаления поля longitude:', err);
+      }
+    });
   // Users table
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -124,8 +136,6 @@ db.serialize(() => {
     floor TEXT,
     apartment TEXT,
     intercom TEXT,
-    latitude REAL,
-    longitude REAL,
     problem_description TEXT,
     visit_date DATETIME,
     status TEXT DEFAULT 'pending',

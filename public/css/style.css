@@ -686,10 +686,7 @@ body {
         min-width: 120px;
     }
     
-    /* Улучшения для карт */
-    #map {
-        height: 250px !important;
-    }
+    /* Стили карт удалены */
     
     /* Улучшения для вкладок */
     .nav-tabs {
@@ -739,9 +736,7 @@ body {
         font-size: 0.9rem;
     }
     
-    #map {
-        height: 350px !important;
-    }
+    /* Стили карт удалены */
 }
 
 /* Стили для больших экранов */
@@ -759,9 +754,7 @@ body {
         font-size: 1rem;
     }
     
-    #map {
-        height: 400px !important;
-    }
+    /* Стили карт удалены */
 }
 
 /* Дополнительные улучшения */
@@ -827,10 +820,7 @@ body {
     padding: 0.75rem 1rem;
 }
 
-#map {
-    border-radius: 0.5rem;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
+/* Стили карт удалены */
 
 .nav-tabs .nav-link {
     border-radius: 0.5rem 0.5rem 0 0;

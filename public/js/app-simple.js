@@ -1226,9 +1226,7 @@ function removeMeasurement(button) {
     }
 }
 
-function searchAddressOnMap() {
-    showAlert('Карты временно отключены', 'info');
-}
+// Функция поиска адреса на карте удалена (карты отключены)
 
 // ==================== НОВЫЕ ФУНКЦИИ УПРАВЛЕНИЯ ЗАКАЗАМИ ====================
 
@@ -2102,20 +2100,7 @@ function showOrderDetailsModal(order) {
                                 <p><strong>Этаж:</strong> ${order.floor || 'Не указан'}</p>
                                 <p><strong>Квартира:</strong> ${order.apartment || 'Не указана'}</p>
                                 <p><strong>Домофон:</strong> ${order.intercom || 'Не указан'}</p>
-                                ${order.latitude && order.longitude ? `
-                                    <div class="mt-3">
-                                        <h6>Координаты</h6>
-                                        <p class="text-muted">Широта: ${order.latitude}, Долгота: ${order.longitude}</p>
-                                        <div class="mt-2">
-                                            <a href="https://yandex.ru/maps/?pt=${order.longitude},${order.latitude}&z=16&l=map" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-external-link-alt"></i> Открыть в Яндекс.Картах
-                                            </a>
-                                            <a href="https://maps.google.com/?q=${order.latitude},${order.longitude}" target="_blank" class="btn btn-sm btn-outline-success ms-2">
-                                                <i class="fab fa-google"></i> Открыть в Google Maps
-                                            </a>
-                                        </div>
-                                    </div>
-                                ` : ''}
+                                <!-- Координаты удалены (карты отключены) -->
                             </div>
                         </div>
                         <div class="row mt-3">
