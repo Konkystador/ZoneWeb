@@ -575,7 +575,7 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
     }
     
     // Обновляем только статус заказа
-    db.run('UPDATE orders SET status = ?, updated_at = datetime("now") WHERE id = ?', [status, orderId], function(err) {
+    db.run('UPDATE orders SET status = ? WHERE id = ?', [status, orderId], function(err) {
       if (err) {
         return res.status(500).json({ error: 'Ошибка обновления статуса заказа' });
       }

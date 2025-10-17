@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест мобильной адаптивности - Оконные Мастера</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../public/css/style.css" rel="stylesheet">
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .device-frame {
+            border: 3px solid #333;
+            border-radius: 20px;
+            margin: 20px auto;
+            background: #000;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .device-frame.mobile {
+            width: 375px;
+            height: 667px;
+        }
+        
+        .device-frame.tablet {
+            width: 768px;
+            height: 1024px;
+        }
+        
+        .device-frame.desktop {
+            width: 1200px;
+            height: 800px;
+        }
+        
+        .device-content {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .device-label {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .test-results {
+            margin-top: 30px;
+        }
+        
+        .test-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .test-item.passed {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        
+        .test-item.failed {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .test-item.warning {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        
+        .responsive-test {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-origin: top left;
+        }
+        
+        .mobile .responsive-test {
+            transform: scale(0.8);
+        }
+        
+        .tablet .responsive-test {
+            transform: scale(0.6);
+        }
+        
+        .desktop .responsive-test {
+            transform: scale(0.4);
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .btn-test {
+            margin: 5px;
+            padding: 10px 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="text-center mb-4">
+            <h1><i class="fas fa-mobile-alt"></i> Тест мобильной адаптивности</h1>
+            <p class="lead">Проверка отображения на разных устройствах</p>
+        </div>
+        
+        <div class="test-controls">
+            <button class="btn btn-primary btn-test" onclick="runResponsiveTests()">
+                <i class="fas fa-play"></i> Запустить тесты
+            </button>
+            <button class="btn btn-secondary btn-test" onclick="clearResults()">
+                <i class="fas fa-trash"></i> Очистить результаты
+            </button>
+            <button class="btn btn-info btn-test" onclick="toggleDeviceFrames()">
+                <i class="fas fa-eye"></i> Показать/скрыть устройства
+            </button>
+        </div>
+        
+        <div id="device-frames" style="display: none;">
+            <div class="device-frame mobile">
+                <div class="device-label">📱 Мобильный (375x667)</div>
+                <div class="device-content">
+                    <div class="responsive-test">
+                        <iframe src="http://188.120.240.71" width="100%" height="100%" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="device-frame tablet">
+                <div class="device-label">📱 Планшет (768x1024)</div>
+                <div class="device-content">
+                    <div class="responsive-test">
+                        <iframe src="http://188.120.240.71" width="100%" height="100%" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="device-frame desktop">
+                <div class="device-label">💻 Десктоп (1200x800)</div>
+                <div class="device-content">
+                    <div class="responsive-test">
+                        <iframe src="http://188.120.240.71" width="100%" height="100%" frameborder="0"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-results" id="test-results"></div>
+    </div>
+    
+    <script>
+        let testResults = [];
+        let deviceFramesVisible = false;
+        
+        function logTest(testName, passed, message = '', type = 'info') {
+            const result = {
+                name: testName,
+                passed: passed,
+                message: message,
+                type: type,
+                timestamp: new Date().toISOString()
+            };
+            testResults.push(result);
+            
+            const status = passed ? '✅' : '❌';
+            const warning = type === 'warning' ? '⚠️' : '';
+            console.log(`${status} ${warning} ${testName}: ${message}`);
+            
+            updateTestUI(result);
+        }
+        
+        function updateTestUI(result) {
+            const testContainer = document.getElementById('test-results');
+            if (!testContainer) return;
+            
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-item ${result.passed ? 'passed' : result.type === 'warning' ? 'warning' : 'failed'}`;
+            testDiv.innerHTML = `
+                <div class="test-name">${result.name}</div>
+                <div class="test-message">${result.message}</div>
+                <div class="test-time">${new Date(result.timestamp).toLocaleTimeString()}</div>
+            `;
+            
+            testContainer.appendChild(testDiv);
+        }
+        
+        function runResponsiveTests() {
+            clearResults();
+            console.log('🚀 Запуск тестов мобильной адаптивности...\n');
+            
+            // Тест 1: Проверка viewport meta tag
+            testViewportMeta();
+            
+            // Тест 2: Проверка Bootstrap классов
+            testBootstrapClasses();
+            
+            // Тест 3: Проверка CSS медиа-запросов
+            testMediaQueries();
+            
+            // Тест 4: Проверка размеров элементов
+            testElementSizes();
+            
+            // Тест 5: Проверка навигации
+            testNavigation();
+            
+            // Тест 6: Проверка форм
+            testForms();
+            
+            // Тест 7: Проверка кнопок
+            testButtons();
+            
+            // Тест 8: Проверка карточек
+            testCards();
+            
+            showFinalResults();
+        }
+        
+        function testViewportMeta() {
+            try {
+                const viewportMeta = document.querySelector('meta[name="viewport"]');
+                assert(viewportMeta !== null, 'Viewport meta tag должен существовать');
+                assert(viewportMeta.content.includes('width=device-width'), 'Viewport должен содержать width=device-width');
+                assert(viewportMeta.content.includes('initial-scale=1'), 'Viewport должен содержать initial-scale=1');
+                
+                logTest('Viewport Meta Tag', true, 'Viewport настроен правильно');
+                return true;
+            } catch (error) {
+                logTest('Viewport Meta Tag', false, error.message);
+                return false;
+            }
+        }
+        
+        function testBootstrapClasses() {
+            try {
+                const responsiveClasses = [
+                    'container-fluid',
+                    'row',
+                    'col-',
+                    'd-block',
+                    'd-none',
+                    'd-md-block',
+                    'd-lg-none'
+                ];
+                
+                let foundClasses = 0;
+                for (const className of responsiveClasses) {
+                    const elements = document.querySelectorAll(`[class*="${className}"]`);
+                    if (elements.length > 0) {
+                        foundClasses++;
+                    }
+                }
+                
+                assert(foundClasses > 0, 'Должны быть найдены Bootstrap responsive классы');
+                
+                logTest('Bootstrap Responsive Classes', true, `Найдено ${foundClasses} responsive классов`);
+                return true;
+            } catch (error) {
+                logTest('Bootstrap Responsive Classes', false, error.message);
+                return false;
+            }
+        }
+        
+        function testMediaQueries() {
+            try {
+                const styleSheets = document.styleSheets;
+                let hasMediaQueries = false;
+                let mediaQueryCount = 0;
+                
+                for (let i = 0; i < styleSheets.length; i++) {
+                    try {
+                        const rules = styleSheets[i].cssRules || styleSheets[i].rules;
+                        for (let j = 0; j < rules.length; j++) {
+                            if (rules[j].type === CSSRule.MEDIA_RULE) {
+                                hasMediaQueries = true;
+                                mediaQueryCount++;
+                            }
+                        }
+                    } catch (e) {
+                        // Игнорируем ошибки CORS
+                    }
+                }
+                
+                assert(hasMediaQueries, 'Должны быть медиа-запросы для адаптивности');
+                
+                logTest('CSS Media Queries', true, `Найдено ${mediaQueryCount} медиа-запросов`);
+                return true;
+            } catch (error) {
+                logTest('CSS Media Queries', false, error.message);
+                return false;
+            }
+        }
+        
+        function testElementSizes() {
+            try {
+                const body = document.body;
+                const bodyWidth = body.offsetWidth;
+                const bodyHeight = body.offsetHeight;
+                
+                assert(bodyWidth > 0, 'Body должен иметь ширину');
+                assert(bodyHeight > 0, 'Body должен иметь высоту');
+                
+                // Проверяем, что элементы не выходят за границы
+                const overflowElements = document.querySelectorAll('*');
+                let overflowCount = 0;
+                
+                for (const element of overflowElements) {
+                    if (element.scrollWidth > element.clientWidth || element.scrollHeight > element.clientHeight) {
+                        overflowCount++;
+                    }
+                }
+                
+                if (overflowCount > 10) {
+                    logTest('Element Sizes', false, `Слишком много элементов с overflow: ${overflowCount}`);
+                    return false;
+                }
+                
+                logTest('Element Sizes', true, `Проверено ${overflowElements.length} элементов, overflow: ${overflowCount}`);
+                return true;
+            } catch (error) {
+                logTest('Element Sizes', false, error.message);
+                return false;
+            }
+        }
+        
+        function testNavigation() {
+            try {
+                const navElements = document.querySelectorAll('nav, .navbar, .nav');
+                assert(navElements.length > 0, 'Должны быть элементы навигации');
+                
+                // Проверяем мобильное меню
+                const mobileMenu = document.querySelector('.navbar-toggler, .burger-menu-3d');
+                if (mobileMenu) {
+                    logTest('Navigation', true, 'Навигация найдена, есть мобильное меню');
+                } else {
+                    logTest('Navigation', true, 'Навигация найдена');
+                }
+                
+                return true;
+            } catch (error) {
+                logTest('Navigation', false, error.message);
+                return false;
+            }
+        }
+        
+        function testForms() {
+            try {
+                const forms = document.querySelectorAll('form');
+                assert(forms.length > 0, 'Должны быть формы');
+                
+                // Проверяем responsive классы в формах
+                const formGroups = document.querySelectorAll('.form-group, .mb-3, .row');
+                assert(formGroups.length > 0, 'Формы должны иметь responsive классы');
+                
+                logTest('Forms', true, `Найдено ${forms.length} форм с responsive классами`);
+                return true;
+            } catch (error) {
+                logTest('Forms', false, error.message);
+                return false;
+            }
+        }
+        
+        function testButtons() {
+            try {
+                const buttons = document.querySelectorAll('button, .btn');
+                assert(buttons.length > 0, 'Должны быть кнопки');
+                
+                // Проверяем размеры кнопок
+                let smallButtons = 0;
+                for (const button of buttons) {
+                    if (button.offsetWidth < 50 || button.offsetHeight < 30) {
+                        smallButtons++;
+                    }
+                }
+                
+                if (smallButtons > buttons.length * 0.5) {
+                    logTest('Buttons', false, `Слишком много маленьких кнопок: ${smallButtons}/${buttons.length}`);
+                    return false;
+                }
+                
+                logTest('Buttons', true, `Проверено ${buttons.length} кнопок, маленьких: ${smallButtons}`);
+                return true;
+            } catch (error) {
+                logTest('Buttons', false, error.message);
+                return false;
+            }
+        }
+        
+        function testCards() {
+            try {
+                const cards = document.querySelectorAll('.card, .order-card');
+                if (cards.length === 0) {
+                    logTest('Cards', true, 'Карточки не найдены (возможно, не загружены)');
+                    return true;
+                }
+                
+                // Проверяем, что карточки не слишком широкие
+                let wideCards = 0;
+                for (const card of cards) {
+                    if (card.offsetWidth > window.innerWidth * 0.9) {
+                        wideCards++;
+                    }
+                }
+                
+                if (wideCards > cards.length * 0.3) {
+                    logTest('Cards', false, `Слишком много широких карточек: ${wideCards}/${cards.length}`);
+                    return false;
+                }
+                
+                logTest('Cards', true, `Проверено ${cards.length} карточек, широких: ${wideCards}`);
+                return true;
+            } catch (error) {
+                logTest('Cards', false, error.message);
+                return false;
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            testResults = [];
+        }
+        
+        function toggleDeviceFrames() {
+            const frames = document.getElementById('device-frames');
+            deviceFramesVisible = !deviceFramesVisible;
+            frames.style.display = deviceFramesVisible ? 'block' : 'none';
+        }
+        
+        function showFinalResults() {
+            const passed = testResults.filter(r => r.passed).length;
+            const total = testResults.length;
+            const successRate = Math.round((passed / total) * 100);
+            
+            const resultsDiv = document.getElementById('test-results');
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'test-item';
+            summaryDiv.style.background = successRate === 100 ? '#d4edda' : successRate >= 80 ? '#fff3cd' : '#f8d7da';
+            summaryDiv.style.borderLeftColor = successRate === 100 ? '#28a745' : successRate >= 80 ? '#ffc107' : '#dc3545';
+            summaryDiv.innerHTML = `
+                <div class="test-name"><strong>📊 Итоговые результаты</strong></div>
+                <div class="test-message">
+                    ✅ Пройдено: ${passed}/${total} | 
+                    📈 Успешность: ${successRate}% | 
+                    ${successRate === 100 ? '🎉 Все тесты пройдены!' : successRate >= 80 ? '⚠️ Большинство тестов пройдено' : '❌ Требуется доработка'}
+                </div>
+            `;
+            
+            resultsDiv.appendChild(summaryDiv);
+            
+            console.log(`\n📊 Итоговые результаты мобильной адаптивности:`);
+            console.log(`✅ Пройдено: ${passed}/${total}`);
+            console.log(`❌ Провалено: ${total - passed}/${total}`);
+            console.log(`📈 Успешность: ${successRate}%`);
+        }
+        
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message);
+            }
+        }
+        
+        // Автозапуск тестов при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Страница тестов мобильной адаптивности загружена');
+        });
+    </script>
+</body>
+</html>
