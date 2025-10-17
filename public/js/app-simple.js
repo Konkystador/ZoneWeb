@@ -3,7 +3,62 @@
  * Без сложной модульной архитектуры - все в одном файле для надежности
  */
 
-// Глобальные переменные
+// Класс основного приложения
+class WindowRepairApp {
+    constructor() {
+        this.currentUser = null;
+        this.orders = [];
+        this.currentPage = 'dashboard';
+        this.init();
+    }
+
+    async init() {
+        console.log('Инициализация приложения...');
+        await this.checkAuth();
+    }
+
+    async checkAuth() {
+        try {
+            const response = await fetch('/api/auth/check');
+            const data = await response.json();
+            console.log('Ответ сервера:', response.status, response.statusText);
+            console.log('Данные ответа:', data);
+            
+            if (data.success) {
+                this.currentUser = data.user;
+                this.showMainApp();
+                this.setupRoleBasedUI();
+            } else {
+                this.showLoginScreen();
+            }
+        } catch (error) {
+            console.error('Ошибка проверки авторизации:', error);
+            this.showLoginScreen();
+        }
+    }
+
+    showLoginScreen() {
+        document.getElementById('loginScreen').style.display = 'block';
+        document.getElementById('mainApp').style.display = 'none';
+    }
+
+    showMainApp() {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        document.getElementById('userName').textContent = this.currentUser.full_name || this.currentUser.username;
+    }
+
+    setupRoleBasedUI() {
+        const adminElements = document.querySelectorAll('[id*="admin"]');
+        const isAdmin = this.currentUser.role === 'admin';
+        
+        adminElements.forEach(element => {
+            element.style.display = isAdmin ? 'block' : 'none';
+        });
+    }
+}
+
+// Глобальные переменные (для совместимости)
 let currentUser = null;
 let orders = [];
 let currentPage = 'dashboard';
@@ -11,36 +66,18 @@ let currentPage = 'dashboard';
 // Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM загружен, инициализируем приложение...');
-    checkAuth();
+    
+    // Инициализируем приложение
+    window.app = new WindowRepairApp();
+    console.log('Приложение инициализировано:', window.app);
 });
 
 // ==================== АВТОРИЗАЦИЯ ====================
 
+// Функции авторизации (для совместимости)
 async function checkAuth() {
-    try {
-        console.log('Проверка авторизации...');
-        const response = await fetch('/api/auth/check');
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Ответ сервера:', response.status, response.statusText);
-            console.log('Данные ответа:', data);
-            
-            if (data.success) {
-                console.log('Пользователь авторизован:', data.user);
-                currentUser = data.user;
-                showMainApp();
-                setupRoleBasedUI();
-            } else {
-                showLoginScreen();
-            }
-        } else {
-            console.log('Пользователь не авторизован');
-            showLoginScreen();
-        }
-    } catch (error) {
-        console.error('Ошибка проверки авторизации:', error);
-        showLoginScreen();
+    if (window.app) {
+        return window.app.checkAuth();
     }
 }
 
@@ -63,9 +100,15 @@ async function login(username, password) {
             
             if (data.success) {
                 console.log('Пользователь авторизован:', data.user);
-                currentUser = data.user;
-                showMainApp();
-                setupRoleBasedUI();
+                if (window.app) {
+                    window.app.currentUser = data.user;
+                    window.app.showMainApp();
+                    window.app.setupRoleBasedUI();
+                } else {
+                    currentUser = data.user;
+                    showMainApp();
+                    setupRoleBasedUI();
+                }
                 showAlert('Добро пожаловать!', 'success');
             } else {
                 showAlert(data.error || 'Ошибка авторизации', 'danger');
