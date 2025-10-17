@@ -450,6 +450,9 @@ async function runAllTests() {
     passedTests = 0;
     failedTests = 0;
     
+    // Показываем индикатор загрузки
+    showTestResults('🔄 Запуск тестов...', 'info');
+    
     const tests = [
         testAppInitialization,
         testDOMElements,
@@ -495,6 +498,9 @@ async function runAllTests() {
         console.log('');
     });
     
+    // Отображаем результаты на сайте
+    displayTestResults();
+    
     return {
         passed: passedTests,
         failed: failedTests,
@@ -503,17 +509,132 @@ async function runAllTests() {
     };
 }
 
+// Функция для отображения результатов на сайте
+function showTestResults(message, type = 'info') {
+    // Создаем или находим контейнер для результатов
+    let resultsContainer = document.getElementById('testResultsContainer');
+    if (!resultsContainer) {
+        resultsContainer = document.createElement('div');
+        resultsContainer.id = 'testResultsContainer';
+        resultsContainer.className = 'container-fluid mt-4';
+        resultsContainer.innerHTML = `
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-vial"></i> Результаты тестирования</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary me-2" onclick="copyTestResults()">
+                                    <i class="fas fa-copy"></i> Копировать
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="hideTestResults()">
+                                    <i class="fas fa-times"></i> Скрыть
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="testResultsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.querySelector('.container-fluid').appendChild(resultsContainer);
+    }
+    
+    const content = document.getElementById('testResultsContent');
+    if (content) {
+        content.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    }
+}
+
+// Функция для отображения полных результатов
+function displayTestResults() {
+    const successRate = Math.round((passedTests / (passedTests + failedTests)) * 100);
+    const statusClass = failedTests === 0 ? 'success' : 'warning';
+    
+    let html = `
+        <div class="alert alert-${statusClass}">
+            <h6><i class="fas fa-chart-bar"></i> Сводка результатов</h6>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>✅ Пройдено:</strong> ${passedTests}
+                </div>
+                <div class="col-md-3">
+                    <strong>❌ Провалено:</strong> ${failedTests}
+                </div>
+                <div class="col-md-3">
+                    <strong>📈 Успешность:</strong> ${successRate}%
+                </div>
+                <div class="col-md-3">
+                    <strong>⏰ Время:</strong> ${new Date().toLocaleString('ru-RU')}
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <h6><i class="fas fa-list"></i> Детальные результаты</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Тест</th>
+                            <th>Статус</th>
+                            <th>Детали</th>
+                            <th>Время</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    testResults.forEach(result => {
+        const statusIcon = result.success ? '✅' : '❌';
+        const statusClass = result.success ? 'success' : 'danger';
+        html += `
+            <tr>
+                <td><strong>${result.name}</strong></td>
+                <td><span class="badge bg-${statusClass}">${statusIcon}</span></td>
+                <td><small>${result.details}</small></td>
+                <td><small>${result.timestamp}</small></td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    const content = document.getElementById('testResultsContent');
+    if (content) {
+        content.innerHTML = html;
+    }
+}
+
+// Функция для скрытия результатов
+function hideTestResults() {
+    const container = document.getElementById('testResultsContainer');
+    if (container) {
+        container.remove();
+    }
+}
+
 // Функция для копирования результатов
 function copyTestResults() {
     let text = '📊 Результаты тестирования приложения\n\n';
     text += `✅ Пройдено: ${passedTests}\n`;
     text += `❌ Провалено: ${failedTests}\n`;
-    text += `📈 Успешность: ${Math.round((passedTests / (passedTests + failedTests)) * 100)}%\n\n`;
+    text += `📈 Успешность: ${Math.round((passedTests / (passedTests + failedTests)) * 100)}%\n`;
+    text += `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n`;
     
     text += 'Результаты тестов:\n';
     testResults.forEach(result => {
         const status = result.success ? '✅' : '❌';
-        text += `${result.name}\n${result.details}\n${result.timestamp}\n\n`;
+        text += `${status} ${result.name}\n`;
+        text += `   ${result.details}\n`;
+        text += `   ${result.timestamp}\n\n`;
     });
     
     navigator.clipboard.writeText(text).then(() => {
@@ -523,12 +644,16 @@ function copyTestResults() {
         }
     }).catch(err => {
         console.error('Ошибка копирования:', err);
+        if (window.app && window.app.showAlert) {
+            window.app.showAlert('Ошибка копирования: ' + err.message, 'danger');
+        }
     });
 }
 
 // Добавляем функции в глобальную область видимости
 window.runAllTests = runAllTests;
 window.copyTestResults = copyTestResults;
+window.hideTestResults = hideTestResults;
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
@@ -537,12 +662,4 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('📍 Для копирования результатов: copyTestResults()');
 });
 
-// Автоматический запуск тестов через 3 секунды после загрузки (опционально)
-setTimeout(() => {
-    console.log('🔄 Автоматический запуск тестов через 3 секунды...');
-    console.log('📍 Для отмены выполните: clearTimeout(window.autoTestTimeout)');
-    window.autoTestTimeout = setTimeout(() => {
-        console.log('🚀 Автоматический запуск тестов...');
-        runAllTests();
-    }, 3000);
-}, 1000);
+// Автоматический запуск отменен - тесты запускаются только вручную
