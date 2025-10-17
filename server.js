@@ -493,7 +493,7 @@ app.get('/api/orders', requireAuth, (req, res) => {
 app.post('/api/orders', requireAuth, (req, res) => {
   const {
     client_name, client_phone, client_telegram, address, city, street, house,
-    entrance, floor, apartment, intercom, latitude, longitude, problem_description,
+    entrance, floor, apartment, intercom, problem_description,
     visit_date, assigned_to
   } = req.body;
   
@@ -521,11 +521,11 @@ app.post('/api/orders', requireAuth, (req, res) => {
       
       db.run(`INSERT INTO orders (
         order_number, client_name, client_phone, client_telegram, address, city, street,
-        house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
+        house, entrance, floor, apartment, intercom, problem_description,
         visit_date, assigned_to, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [orderNumber, client_name, client_phone, client_telegram, address, city, street,
-       house, entrance, floor, apartment, intercom, latitude, longitude, problem_description,
+       house, entrance, floor, apartment, intercom, problem_description,
        visit_date, finalAssignedTo, req.session.userId],
       function(err) {
         if (err) {
