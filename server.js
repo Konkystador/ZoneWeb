@@ -534,29 +534,69 @@ app.get('/api/orders/:id', requireAuth, (req, res) => {
   });
 });
 
-// Update order status
+// Update order status or full order data
 app.put('/api/orders/:id', requireAuth, (req, res) => {
   const orderId = req.params.id;
-  const { status } = req.body;
+  const { status, client_name, client_phone, client_telegram, city, street, house, apartment, entrance, floor, intercom, problem_description, visit_date } = req.body;
   
-  // Проверяем, что статус валидный
-  const validStatuses = ['pending', 'in_progress', 'estimate_sent', 'completed', 'cancelled', 'declined'];
-  if (!validStatuses.includes(status)) {
-    return res.status(400).json({ error: 'Недопустимый статус заказа' });
+  // Если передается только статус, обновляем только статус
+  if (status && Object.keys(req.body).length === 1) {
+    // Проверяем, что статус валидный
+    const validStatuses = ['pending', 'in_progress', 'estimate_sent', 'completed', 'cancelled', 'declined'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Недопустимый статус заказа' });
+    }
+    
+    // Обновляем только статус заказа
+    db.run('UPDATE orders SET status = ?, updated_at = datetime("now") WHERE id = ?', [status, orderId], function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Ошибка обновления статуса заказа' });
+      }
+      
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Заказ не найден' });
+      }
+      
+      res.json({ success: true, message: 'Статус заказа обновлен' });
+    });
+  } else {
+    // Обновляем полные данные заказа
+    const updateQuery = `
+      UPDATE orders SET 
+        client_name = ?, 
+        client_phone = ?, 
+        client_telegram = ?, 
+        city = ?, 
+        street = ?, 
+        house = ?, 
+        apartment = ?, 
+        entrance = ?, 
+        floor = ?, 
+        intercom = ?, 
+        problem_description = ?, 
+        visit_date = ?,
+        updated_at = datetime("now")
+      WHERE id = ?
+    `;
+    
+    const updateParams = [
+      client_name, client_phone, client_telegram, city, street, house, 
+      apartment, entrance, floor, intercom, problem_description, visit_date, orderId
+    ];
+    
+    db.run(updateQuery, updateParams, function(err) {
+      if (err) {
+        console.error('Ошибка обновления заказа:', err);
+        return res.status(500).json({ error: 'Ошибка обновления заказа' });
+      }
+      
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Заказ не найден' });
+      }
+      
+      res.json({ success: true, message: 'Заказ обновлен' });
+    });
   }
-  
-  db.run('UPDATE orders SET status = ?, updated_at = datetime("now") WHERE id = ?', 
-    [status, orderId], function(err) {
-    if (err) {
-      return res.status(500).json({ error: 'Ошибка обновления заказа' });
-    }
-    
-    if (this.changes === 0) {
-      return res.status(404).json({ error: 'Заказ не найден' });
-    }
-    
-    res.json({ success: true, message: 'Статус заказа обновлен' });
-  });
 });
 
 // Delete order (permanent deletion)

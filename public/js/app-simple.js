@@ -443,6 +443,110 @@ async function viewOrderCard(orderId) {
     }
 }
 
+// Функция редактирования заказа
+function editOrder(orderId) {
+    console.log('Редактирование заказа:', orderId);
+    // Закрываем модальное окно просмотра
+    const modal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
+    if (modal) {
+        modal.hide();
+    }
+    
+    // Переходим на страницу работы с заказом
+    currentWorkOrderId = orderId;
+    showPage('work');
+    loadOrderForEdit(orderId);
+}
+
+// Загрузка данных заказа для редактирования
+async function loadOrderForEdit(orderId) {
+    try {
+        const response = await fetch(`/api/orders/${orderId}`);
+        if (response.ok) {
+            const order = await response.json();
+            populateEditForm(order);
+        } else {
+            showAlert('Ошибка загрузки данных заказа', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки заказа для редактирования:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Заполнение формы редактирования
+function populateEditForm(order) {
+    document.getElementById('editClientName').value = order.client_name || '';
+    document.getElementById('editClientPhone').value = order.client_phone || '';
+    document.getElementById('editClientTelegram').value = order.client_telegram || '';
+    document.getElementById('editCity').value = order.city || '';
+    document.getElementById('editStreet').value = order.street || '';
+    document.getElementById('editHouse').value = order.house || '';
+    document.getElementById('editApartment').value = order.apartment || '';
+    document.getElementById('editEntrance').value = order.entrance || '';
+    document.getElementById('editFloor').value = order.floor || '';
+    document.getElementById('editIntercom').value = order.intercom || '';
+    document.getElementById('editProblemDescription').value = order.problem_description || '';
+    
+    // Форматируем дату для input datetime-local
+    if (order.visit_date) {
+        const visitDate = new Date(order.visit_date);
+        const formattedDate = visitDate.toISOString().slice(0, 16);
+        document.getElementById('editVisitDate').value = formattedDate;
+    }
+}
+
+// Сохранение изменений заказа
+async function saveOrderChanges() {
+    if (!currentWorkOrderId) {
+        showAlert('Нет активного заказа для сохранения', 'warning');
+        return;
+    }
+    
+    const formData = {
+        client_name: document.getElementById('editClientName').value,
+        client_phone: document.getElementById('editClientPhone').value,
+        client_telegram: document.getElementById('editClientTelegram').value,
+        city: document.getElementById('editCity').value,
+        street: document.getElementById('editStreet').value,
+        house: document.getElementById('editHouse').value,
+        apartment: document.getElementById('editApartment').value,
+        entrance: document.getElementById('editEntrance').value,
+        floor: document.getElementById('editFloor').value,
+        intercom: document.getElementById('editIntercom').value,
+        problem_description: document.getElementById('editProblemDescription').value,
+        visit_date: document.getElementById('editVisitDate').value
+    };
+    
+    // Валидация
+    if (!formData.client_name || !formData.client_phone) {
+        showAlert('Заполните обязательные поля (имя и телефон)', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/orders/${currentWorkOrderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showAlert('Изменения сохранены успешно!', 'success');
+            // Обновляем информацию о заказе на странице
+            loadWorkData();
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Ошибка сохранения изменений', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка сохранения заказа:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
 async function startWork(orderId) {
     console.log('=== НАЧАЛО РАБОТЫ С ЗАКАЗОМ ===');
     console.log('ID заказа:', orderId);
@@ -1657,6 +1761,9 @@ function showOrderDetailsModal(order) {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                        <button type="button" class="btn btn-primary" onclick="editOrder(${order.id})">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </button>
                         <button type="button" class="btn btn-success" onclick="startWork(${order.id})" data-bs-dismiss="modal">
                             <i class="fas fa-play"></i> В работу
                         </button>
@@ -1684,4 +1791,10 @@ function showOrderDetailsModal(order) {
     // Показываем модальное окно
     const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
     modal.show();
+    
+    // Исправляем проблему с aria-hidden
+    const modalElement = document.getElementById('orderDetailsModal');
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        modalElement.remove();
+    }, { once: true });
 }
