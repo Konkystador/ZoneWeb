@@ -38,102 +38,68 @@
         <!-- Navigation -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container-fluid">
-                <a class="navbar-brand" href="#" data-page="dashboard">
-                    <i class="fas fa-window-maximize"></i> Оконные Мастера
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#" data-page="dashboard">
-                                <i class="fas fa-tachometer-alt"></i> Главная
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" data-page="orders">
-                                <i class="fas fa-clipboard-list"></i> Заказы
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" data-page="estimates">
-                                <i class="fas fa-calculator"></i> Сметы
-                            </a>
-                        </li>
-                        <li class="nav-item" id="adminMenu" style="display: none;">
-                            <a class="nav-link" href="#" data-page="admin">
-                                <i class="fas fa-cog"></i> Администрирование
-                            </a>
-                        </li>
-                        <li class="nav-item" id="auditLogNavItem" style="display: none;">
-                            <a class="nav-link" href="#" data-page="audit-log">
-                                <i class="fas fa-history"></i> Журнал операций
-                            </a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i> <span id="userName"></span>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#" data-page="profile">
-                                    <i class="fas fa-user-circle"></i> Профиль
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" id="logoutBtn">
-                                    <i class="fas fa-sign-out-alt"></i> Выйти
-                                </a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                    
-                    <!-- 3D Бургер-меню справа -->
-                    <div class="navbar-nav ms-auto">
-                        <div class="nav-item dropdown">
-                            <button class="btn btn-outline-light burger-menu-3d" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-bars"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end burger-dropdown-3d">
-                                <li><h6 class="dropdown-header">Навигация</h6></li>
-                                <li><a class="dropdown-item" href="#" data-page="dashboard">
-                                    <i class="fas fa-tachometer-alt text-primary"></i> Главная панель
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" data-page="orders">
-                                    <i class="fas fa-clipboard-list text-primary"></i> Заказы
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" data-page="estimates">
-                                    <i class="fas fa-calculator text-primary"></i> Сметы
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" data-page="search">
-                                    <i class="fas fa-search text-info"></i> Поиск
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><h6 class="dropdown-header">Быстрые действия</h6></li>
-                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#newOrderModal">
-                                    <i class="fas fa-plus-circle text-success"></i> Новый заказ
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="showOrderCards('pending')">
-                                    <i class="fas fa-clock text-warning"></i> Предстоящие
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="showOrderCards('in_progress')">
-                                    <i class="fas fa-play text-info"></i> В работе
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" onclick="showOrderCards('completed')">
-                                    <i class="fas fa-check text-success"></i> Выполненные
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><h6 class="dropdown-header">Администрирование</h6></li>
-                                <li><a class="dropdown-item" href="#" data-page="admin" id="adminQuickMenu" style="display: none;">
-                                    <i class="fas fa-cog text-secondary"></i> Настройки
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" data-page="audit-log" id="auditQuickMenu" style="display: none;">
-                                    <i class="fas fa-history text-secondary"></i> Журнал операций
-                                </a></li>
-                            </ul>
-                        </div>
+                <!-- 3D Бургер-меню слева -->
+                <div class="navbar-nav">
+                    <div class="nav-item dropdown">
+                        <button class="btn btn-outline-light burger-menu-3d" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <ul class="dropdown-menu burger-dropdown-3d">
+                            <li><h6 class="dropdown-header">Навигация</h6></li>
+                            <li><a class="dropdown-item" href="#" data-page="dashboard">
+                                <i class="fas fa-tachometer-alt text-primary"></i> Главная панель
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-page="orders">
+                                <i class="fas fa-clipboard-list text-primary"></i> Заказы
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-page="estimates">
+                                <i class="fas fa-calculator text-primary"></i> Сметы
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-page="search">
+                                <i class="fas fa-search text-info"></i> Поиск
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Быстрые действия</h6></li>
+                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#newOrderModal">
+                                <i class="fas fa-plus-circle text-success"></i> Новый заказ
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showOrderCards('pending')">
+                                <i class="fas fa-clock text-warning"></i> Предстоящие
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showOrderCards('in_progress')">
+                                <i class="fas fa-play text-info"></i> В работе
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="showOrderCards('completed')">
+                                <i class="fas fa-check text-success"></i> Выполненные
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Профиль</h6></li>
+                            <li><a class="dropdown-item" href="#" data-page="profile">
+                                <i class="fas fa-user-circle text-primary"></i> Профиль
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt text-danger"></i> Выйти
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Администрирование</h6></li>
+                            <li><a class="dropdown-item" href="#" data-page="admin" id="adminQuickMenu" style="display: none;">
+                                <i class="fas fa-cog text-secondary"></i> Настройки
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" data-page="audit-log" id="auditQuickMenu" style="display: none;">
+                                <i class="fas fa-history text-secondary"></i> Журнал операций
+                            </a></li>
+                        </ul>
                     </div>
+                    <a class="navbar-brand ms-3" href="#" data-page="dashboard">
+                        <i class="fas fa-window-maximize"></i> Оконные Мастера
+                    </a>
+                </div>
+                
+                <!-- Информация о пользователе справа -->
+                <div class="navbar-nav ms-auto">
+                    <span class="navbar-text">
+                        <i class="fas fa-user"></i> <span id="userName"></span>
+                    </span>
                 </div>
             </div>
         </nav>
@@ -1205,12 +1171,6 @@
                             <label class="form-label">Описание проблемы</label>
                             <textarea class="form-control" id="problemDescription" rows="3"></textarea>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Выбор точки на карте</label>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle"></i> Карты временно отключены. Адрес будет сохранен как текст.
-                            </div>
-                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -1524,7 +1484,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Простое приложение (все в одном файле) -->
-    <script src="js/app-simple.js?v=13"></script>
+    <script src="js/app-simple.js?v=14"></script>
     <script src="js/estimate.js?v=6"></script>
     <script src="js/pdf-export.js?v=6"></script>
 </body>

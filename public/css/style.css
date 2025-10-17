@@ -305,6 +305,105 @@ body {
     border-width: 1px;
 }
 
+/* 3D кнопки в карточках заказов */
+.btn-group-3d {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+}
+
+.btn-3d {
+    position: relative;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 
+        0 4px 8px rgba(0,0,0,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+    flex: 1;
+    min-width: 40px;
+    max-width: 60px;
+}
+
+.btn-3d:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 
+        0 6px 12px rgba(0,0,0,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.btn-3d:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 
+        0 2px 4px rgba(0,0,0,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.btn-3d.btn-primary {
+    background: linear-gradient(145deg, #007bff, #0056b3);
+    color: white;
+}
+
+.btn-3d.btn-success {
+    background: linear-gradient(145deg, #28a745, #1e7e34);
+    color: white;
+}
+
+.btn-3d.btn-info {
+    background: linear-gradient(145deg, #17a2b8, #117a8b);
+    color: white;
+}
+
+.btn-3d.btn-warning {
+    background: linear-gradient(145deg, #ffc107, #e0a800);
+    color: #212529;
+}
+
+.btn-3d.btn-danger {
+    background: linear-gradient(145deg, #dc3545, #c82333);
+    color: white;
+}
+
+.btn-3d i {
+    font-size: 0.9rem;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .btn-group-3d {
+        gap: 1px;
+    }
+    
+    .btn-3d {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+        min-width: 35px;
+        max-width: 50px;
+    }
+    
+    .btn-3d i {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .btn-group-3d {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .btn-3d {
+        width: 100%;
+        max-width: none;
+        padding: 8px;
+    }
+}
+
 .login-header {
     text-align: center;
     margin-bottom: 2rem;

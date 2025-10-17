@@ -314,89 +314,89 @@ function createOrderCardHtml(order) {
             </div>
         `;
         
-        // Кнопки для отказов и корзины
+        // 3D кнопки для отказов и корзины (только иконки)
         if (order.status === 'declined') {
             actionButtonsHtml = `
-                <div class="btn-group w-100" role="group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
-                        <i class="fas fa-eye"></i> Просмотр
+                <div class="btn-group-3d w-100" role="group">
+                    <button class="btn btn-3d btn-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="restoreOrder(${order.id})" title="Восстановить заказ">
-                        <i class="fas fa-undo"></i> Восстановить
+                    <button class="btn btn-3d btn-success" onclick="restoreOrder(${order.id})" title="Восстановить">
+                        <i class="fas fa-undo"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${order.id})" title="Удалить навсегда">
-                        <i class="fas fa-trash"></i> Удалить
+                    <button class="btn btn-3d btn-danger" onclick="deleteOrder(${order.id})" title="Удалить">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
             `;
         } else if (order.status === 'cancelled') {
             actionButtonsHtml = `
-                <div class="btn-group w-100" role="group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
-                        <i class="fas fa-eye"></i> Просмотр
+                <div class="btn-group-3d w-100" role="group">
+                    <button class="btn btn-3d btn-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="restoreOrder(${order.id})" title="Восстановить заказ">
-                        <i class="fas fa-undo"></i> Восстановить
+                    <button class="btn btn-3d btn-success" onclick="restoreOrder(${order.id})" title="Восстановить">
+                        <i class="fas fa-undo"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${order.id})" title="Удалить навсегда">
-                        <i class="fas fa-trash"></i> Удалить
+                    <button class="btn btn-3d btn-danger" onclick="deleteOrder(${order.id})" title="Удалить">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
             `;
         }
     } else {
-        // Обычные кнопки для активных заказов
+        // 3D кнопки для активных заказов (только иконки)
         if (order.status === 'in_progress') {
             actionButtonsHtml = `
-                <div class="btn-group w-100" role="group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
-                        <i class="fas fa-eye"></i> Просмотр
+                <div class="btn-group-3d w-100" role="group">
+                    <button class="btn btn-3d btn-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-info" onclick="sendEstimate(${order.id})" title="Отправить смету">
-                        <i class="fas fa-paper-plane"></i> Смета отправлена
+                    <button class="btn btn-3d btn-info" onclick="sendEstimate(${order.id})" title="Смета отправлена">
+                        <i class="fas fa-paper-plane"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="completeOrder(${order.id})" title="Завершить заказ">
-                        <i class="fas fa-check"></i> Выполнено
+                    <button class="btn btn-3d btn-success" onclick="completeOrder(${order.id})" title="Выполнено">
+                        <i class="fas fa-check"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
-                        <i class="fas fa-ban"></i> Отказ
+                    <button class="btn btn-3d btn-warning" onclick="declineOrder(${order.id})" title="Отказ">
+                        <i class="fas fa-ban"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
-                        <i class="fas fa-times"></i> Отмена
+                    <button class="btn btn-3d btn-danger" onclick="cancelOrder(${order.id})" title="Отмена">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             `;
         } else if (order.status === 'estimate_sent') {
             actionButtonsHtml = `
-                <div class="btn-group w-100" role="group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
-                        <i class="fas fa-eye"></i> Просмотр
+                <div class="btn-group-3d w-100" role="group">
+                    <button class="btn btn-3d btn-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="completeOrder(${order.id})" title="Завершить заказ">
-                        <i class="fas fa-check"></i> Выполнено
+                    <button class="btn btn-3d btn-success" onclick="completeOrder(${order.id})" title="Выполнено">
+                        <i class="fas fa-check"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
-                        <i class="fas fa-ban"></i> Отказ
+                    <button class="btn btn-3d btn-warning" onclick="declineOrder(${order.id})" title="Отказ">
+                        <i class="fas fa-ban"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
-                        <i class="fas fa-times"></i> Отмена
+                    <button class="btn btn-3d btn-danger" onclick="cancelOrder(${order.id})" title="Отмена">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             `;
         } else {
             actionButtonsHtml = `
-                <div class="btn-group w-100" role="group">
-                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
-                        <i class="fas fa-eye"></i> Просмотр
+                <div class="btn-group-3d w-100" role="group">
+                    <button class="btn btn-3d btn-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
+                        <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="startWork(${order.id})" title="Начать работу">
-                        <i class="fas fa-play"></i> В работу
+                    <button class="btn btn-3d btn-success" onclick="startWork(${order.id})" title="В работу">
+                        <i class="fas fa-play"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
-                        <i class="fas fa-ban"></i> Отказ
+                    <button class="btn btn-3d btn-warning" onclick="declineOrder(${order.id})" title="Отказ">
+                        <i class="fas fa-ban"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
-                        <i class="fas fa-times"></i> Отмена
+                    <button class="btn btn-3d btn-danger" onclick="cancelOrder(${order.id})" title="Отмена">
+                        <i class="fas fa-times"></i>
                     </button>
                 </div>
             `;
@@ -759,9 +759,7 @@ async function saveOrder() {
         intercom: document.getElementById('intercom')?.value || '',
         problem_description: document.getElementById('problemDescription')?.value || '',
         visit_date: document.getElementById('visitDate')?.value || '',
-        assigned_to: document.getElementById('assignedTo')?.value || null,
-        latitude: null, // Карты отключены
-        longitude: null // Карты отключены
+        assigned_to: document.getElementById('assignedTo')?.value || null
     };
 
     console.log('Данные для отправки:', formData);
@@ -1972,6 +1970,12 @@ window.clearSearch = function() {
 
 // Обработчик формы входа
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM загружен, инициализируем приложение...');
+    
+    // Инициализируем приложение сразу
+    window.app = new WindowRepairApp();
+    console.log('Приложение инициализировано:', window.app);
+    
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
