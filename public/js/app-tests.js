@@ -39,32 +39,46 @@ function logTest(testName, success, details = '') {
 function testAppInitialization() {
     try {
         console.log('🔍 Проверка инициализации приложения...');
+        console.log('📍 ДИАГНОСТИКА ИНИЦИАЛИЗАЦИИ:');
         
         // Проверяем наличие глобальной переменной app
         const app = window.app;
-        console.log('📍 window.app:', app ? 'найден' : 'не найден');
+        console.log('   - window.app:', app ? 'найден' : 'не найден');
+        console.log('   - window.app тип:', typeof app);
+        console.log('   - window.app значение:', app);
         
         if (app) {
-            console.log('📍 Тип app:', typeof app);
-            console.log('📍 Конструктор app:', app.constructor.name);
-            console.log('📍 Свойства app:', Object.keys(app));
+            console.log('   - Конструктор app:', app.constructor.name);
+            console.log('   - Свойства app:', Object.keys(app));
+            console.log('   - app.currentUser:', app.currentUser);
+            console.log('   - app.orders:', app.orders ? `массив из ${app.orders.length} элементов` : 'не массив');
+            console.log('   - app.currentPage:', app.currentPage);
         }
         
         // Проверяем WindowRepairApp
         const WindowRepairApp = window.WindowRepairApp;
-        console.log('📍 WindowRepairApp:', WindowRepairApp ? 'найден' : 'не найден');
+        console.log('   - WindowRepairApp:', WindowRepairApp ? 'найден' : 'не найден');
+        console.log('   - WindowRepairApp тип:', typeof WindowRepairApp);
         
         // Проверяем основные методы
         const hasLogin = app && typeof app.login === 'function';
         const hasLogout = app && typeof app.logout === 'function';
         const hasShowOrderCards = app && typeof app.showOrderCards === 'function';
         const hasViewOrderCard = app && typeof app.viewOrderCard === 'function';
+        const hasInit = app && typeof app.init === 'function';
         
-        console.log('📍 Методы app:');
-        console.log('   - login:', hasLogin ? 'да' : 'нет');
-        console.log('   - logout:', hasLogout ? 'да' : 'нет');
-        console.log('   - showOrderCards:', hasShowOrderCards ? 'да' : 'нет');
-        console.log('   - viewOrderCard:', hasViewOrderCard ? 'да' : 'нет');
+        console.log('   - Методы app:');
+        console.log('     * login:', hasLogin ? 'да' : 'нет');
+        console.log('     * logout:', hasLogout ? 'да' : 'нет');
+        console.log('     * showOrderCards:', hasShowOrderCards ? 'да' : 'нет');
+        console.log('     * viewOrderCard:', hasViewOrderCard ? 'да' : 'нет');
+        console.log('     * init:', hasInit ? 'да' : 'нет');
+        
+        // Проверяем глобальные функции
+        console.log('   - Глобальные функции:');
+        console.log('     * showOrderCards:', typeof window.showOrderCards);
+        console.log('     * viewOrderCard:', typeof window.viewOrderCard);
+        console.log('     * showAlert:', typeof window.showAlert);
         
         const success = !!(app && (hasLogin || hasShowOrderCards));
         logTest('Инициализация приложения', success, 
@@ -72,6 +86,7 @@ function testAppInitialization() {
         return success;
     } catch (error) {
         console.error('❌ Ошибка проверки инициализации:', error);
+        console.error('   - Stack trace:', error.stack);
         logTest('Инициализация приложения', false, error.message);
         return false;
     }
@@ -81,6 +96,7 @@ function testAppInitialization() {
 function testDOMElements() {
     try {
         console.log('🔍 Проверка DOM элементов...');
+        console.log('📍 ДИАГНОСТИКА DOM ЭЛЕМЕНТОВ:');
         
         const elements = [
             { id: 'mainApp', name: 'Основное приложение' },
@@ -93,17 +109,35 @@ function testDOMElements() {
         
         let foundElements = 0;
         const foundList = [];
+        const notFoundList = [];
         
+        console.log('   - Поиск элементов по ID:');
         elements.forEach(element => {
             const el = document.getElementById(element.id);
             if (el) {
                 foundElements++;
                 foundList.push(element.name);
-                console.log(`✅ ${element.name}: найден`);
+                console.log(`     ✅ ${element.name} (${element.id}): найден`);
+                console.log(`       - Классы: ${el.className}`);
+                console.log(`       - Видимый: ${el.offsetWidth > 0 && el.offsetHeight > 0 ? 'да' : 'нет'}`);
+                console.log(`       - Родитель: ${el.parentElement ? el.parentElement.tagName : 'нет'}`);
             } else {
-                console.log(`❌ ${element.name}: не найден`);
+                notFoundList.push(element.name);
+                console.log(`     ❌ ${element.name} (${element.id}): не найден`);
             }
         });
+        
+        // Дополнительная диагностика
+        console.log('   - Дополнительная диагностика:');
+        console.log(`     - Всего элементов на странице: ${document.querySelectorAll('*').length}`);
+        console.log(`     - Элементы с классом "card": ${document.querySelectorAll('.card').length}`);
+        console.log(`     - Элементы с классом "modal": ${document.querySelectorAll('.modal').length}`);
+        console.log(`     - Элементы с классом "form": ${document.querySelectorAll('form').length}`);
+        
+        // Поиск похожих элементов
+        console.log('   - Поиск похожих элементов:');
+        const allIds = Array.from(document.querySelectorAll('[id]')).map(el => el.id);
+        console.log(`     - Все ID на странице: ${allIds.slice(0, 10).join(', ')}${allIds.length > 10 ? '...' : ''}`);
         
         const success = foundElements >= 2; // Минимум 2 элемента должны быть найдены
         logTest('DOM элементы', success, 
@@ -111,6 +145,7 @@ function testDOMElements() {
         return success;
     } catch (error) {
         console.error('❌ Ошибка проверки DOM элементов:', error);
+        console.error('   - Stack trace:', error.stack);
         logTest('DOM элементы', false, error.message);
         return false;
     }
@@ -396,12 +431,33 @@ function testPerformance() {
         const jsLoadTimeOk = jsLoadTime < 2000; // JS должен загружаться менее 2 секунд
         const totalSizeOk = totalSize < 10 * 1024 * 1024; // Общий размер менее 10MB
         
-        console.log('📊 Критерии производительности:');
+        console.log('📊 КРИТЕРИИ ПРОИЗВОДИТЕЛЬНОСТИ:');
         console.log(`   - Время загрузки: ${loadTime}ms (лимит: 15000ms) - ${loadTimeOk ? '✅' : '❌'}`);
         console.log(`   - Время теста: ${testDuration}ms (лимит: 5000ms) - ${testDurationOk ? '✅' : '❌'}`);
         console.log(`   - Память: ${memoryUsage}MB (лимит: 500MB) - ${memoryOk ? '✅' : '❌'}`);
         console.log(`   - JS загрузка: ${jsLoadTime}ms (лимит: 2000ms) - ${jsLoadTimeOk ? '✅' : '❌'}`);
         console.log(`   - Размер: ${totalSizeMB}MB (лимит: 10MB) - ${totalSizeOk ? '✅' : '❌'}`);
+        
+        console.log('📍 ДОПОЛНИТЕЛЬНАЯ ДИАГНОСТИКА ПРОИЗВОДИТЕЛЬНОСТИ:');
+        console.log(`   - Navigation timing доступен: ${!!navigation}`);
+        console.log(`   - Performance memory доступен: ${!!performance.memory}`);
+        console.log(`   - Загружено ресурсов: ${resources.length}`);
+        console.log(`   - JS файлов: ${jsResources.length}`);
+        console.log(`   - CSS файлов: ${cssResources.length}`);
+        
+        if (resources.length > 0) {
+            console.log('   - Медленные ресурсы (>1000ms):');
+            resources.filter(r => r.duration > 1000).forEach(r => {
+                console.log(`     * ${r.name.split('/').pop()}: ${r.duration.toFixed(2)}ms`);
+            });
+        }
+        
+        if (jsResources.length > 0) {
+            console.log('   - JS файлы:');
+            jsResources.forEach(r => {
+                console.log(`     * ${r.name.split('/').pop()}: ${r.duration ? r.duration.toFixed(2) + 'ms' : 'неизвестно'}`);
+            });
+        }
         
         const success = testDurationOk && loadTimeOk && memoryOk && jsLoadTimeOk && totalSizeOk;
         

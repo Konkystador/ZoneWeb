@@ -1011,12 +1011,25 @@ textarea.form-control {
     overflow: hidden;
 }
 
-/* Убираем background для карточек с цветными фонами */
-.order-card-3d.bg-primary,
-.order-card-3d.bg-success,
-.order-card-3d.bg-warning,
+/* Специальные стили для цветных карточек с 3D эффектом */
+.order-card-3d.bg-primary {
+    background: linear-gradient(145deg, #0d6efd, #0b5ed7) !important;
+    color: white !important;
+}
+
+.order-card-3d.bg-success {
+    background: linear-gradient(145deg, #198754, #157347) !important;
+    color: white !important;
+}
+
+.order-card-3d.bg-warning {
+    background: linear-gradient(145deg, #ffc107, #ffca2c) !important;
+    color: #000 !important;
+}
+
 .order-card-3d.bg-info {
-    background: inherit !important; /* Используем Bootstrap цвет */
+    background: linear-gradient(145deg, #0dcaf0, #3dd5f3) !important;
+    color: #000 !important;
 }
 
 /* Добавляем 3D эффект только для карточек без цветного фона */
