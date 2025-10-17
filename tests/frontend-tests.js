@@ -548,7 +548,272 @@ function testMainAppPage() {
     }
 }
 
-// Тест 12: Проверка загрузки скриптов
+// Тест 12: Проверка бэкенда API
+async function testBackendAPI() {
+    try {
+        console.log('🔍 Проверка бэкенда API...');
+        
+        const baseUrl = window.location.origin;
+        console.log('📍 Базовый URL:', baseUrl);
+        
+        // Тестируем основные API endpoints
+        const apiTests = [
+            { name: 'Проверка авторизации', url: '/api/auth/check', method: 'GET' },
+            { name: 'Проверка пользователей', url: '/api/users', method: 'GET' },
+            { name: 'Проверка заказов', url: '/api/orders', method: 'GET' },
+            { name: 'Проверка сервисов', url: '/api/services', method: 'GET' }
+        ];
+        
+        let successfulTests = 0;
+        const results = [];
+        
+        for (const test of apiTests) {
+            try {
+                console.log(`📍 Тестируем ${test.name}...`);
+                const response = await fetch(`${baseUrl}${test.url}`, {
+                    method: test.method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = {
+                    name: test.name,
+                    url: test.url,
+                    status: response.status,
+                    ok: response.ok,
+                    statusText: response.statusText
+                };
+                
+                if (response.ok) {
+                    try {
+                        const data = await response.json();
+                        result.data = data;
+                        console.log(`✅ ${test.name}: ${response.status} ${response.statusText}`);
+                        console.log(`   - Данные:`, data);
+                    } catch (e) {
+                        console.log(`✅ ${test.name}: ${response.status} ${response.statusText} (не JSON)`);
+                    }
+                    successfulTests++;
+                } else {
+                    console.log(`❌ ${test.name}: ${response.status} ${response.statusText}`);
+                }
+                
+                results.push(result);
+            } catch (error) {
+                console.log(`❌ ${test.name}: Ошибка сети - ${error.message}`);
+                results.push({
+                    name: test.name,
+                    url: test.url,
+                    error: error.message
+                });
+            }
+        }
+        
+        // Тестируем авторизацию
+        console.log('📍 Тестируем авторизацию...');
+        try {
+            const loginResponse = await fetch(`${baseUrl}/api/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: 'admin',
+                    password: 'admin123'
+                })
+            });
+            
+            if (loginResponse.ok) {
+                const loginData = await loginResponse.json();
+                console.log('✅ Авторизация: успешно');
+                console.log('   - Пользователь:', loginData.user);
+                
+                // Тестируем защищенные endpoints с авторизацией
+                const protectedTests = [
+                    { name: 'Заказы с авторизацией', url: '/api/orders' },
+                    { name: 'Профиль пользователя', url: '/api/user/profile' }
+                ];
+                
+                for (const test of protectedTests) {
+                    try {
+                        const response = await fetch(`${baseUrl}${test.url}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Cookie': loginResponse.headers.get('set-cookie') || ''
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            console.log(`✅ ${test.name}: ${response.status}`);
+                            successfulTests++;
+                        } else {
+                            console.log(`❌ ${test.name}: ${response.status}`);
+                        }
+                    } catch (error) {
+                        console.log(`❌ ${test.name}: ${error.message}`);
+                    }
+                }
+            } else {
+                console.log('❌ Авторизация: не удалась');
+            }
+        } catch (error) {
+            console.log('❌ Авторизация: ошибка -', error.message);
+        }
+        
+        const success = successfulTests > 0;
+        logTest('Бэкенд API', success, 
+            `Успешных тестов: ${successfulTests}/${apiTests.length + 3}, результаты: ${JSON.stringify(results, null, 2)}`);
+        return success;
+    } catch (error) {
+        console.error('❌ Ошибка проверки бэкенда:', error);
+        logTest('Бэкенд API', false, error.message);
+        return false;
+    }
+}
+
+// Тест 13: Проверка производительности
+function testPerformance() {
+    try {
+        console.log('🔍 Проверка производительности...');
+        
+        const startTime = performance.now();
+        console.log('📍 Время начала теста:', startTime);
+        
+        // Проверяем время загрузки страницы
+        const navigation = performance.getEntriesByType('navigation')[0];
+        if (navigation) {
+            console.log('📍 Время загрузки страницы:');
+            console.log('   - DNS lookup:', navigation.domainLookupEnd - navigation.domainLookupStart, 'ms');
+            console.log('   - TCP connect:', navigation.connectEnd - navigation.connectStart, 'ms');
+            console.log('   - Request:', navigation.responseStart - navigation.requestStart, 'ms');
+            console.log('   - Response:', navigation.responseEnd - navigation.responseStart, 'ms');
+            console.log('   - DOM loading:', navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart, 'ms');
+            console.log('   - Page load:', navigation.loadEventEnd - navigation.loadEventStart, 'ms');
+            console.log('   - Total:', navigation.loadEventEnd - navigation.navigationStart, 'ms');
+        }
+        
+        // Проверяем время выполнения скриптов
+        const scripts = performance.getEntriesByType('resource').filter(entry => 
+            entry.name.includes('.js')
+        );
+        console.log('📍 Время загрузки скриптов:');
+        scripts.forEach(script => {
+            console.log(`   - ${script.name.split('/').pop()}: ${script.duration.toFixed(2)}ms`);
+        });
+        
+        // Проверяем использование памяти
+        if (performance.memory) {
+            console.log('📍 Использование памяти:');
+            console.log('   - Используется:', (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2), 'MB');
+            console.log('   - Всего:', (performance.memory.totalJSHeapSize / 1024 / 1024).toFixed(2), 'MB');
+            console.log('   - Лимит:', (performance.memory.jsHeapSizeLimit / 1024 / 1024).toFixed(2), 'MB');
+        }
+        
+        const endTime = performance.now();
+        const testDuration = endTime - startTime;
+        console.log('📍 Время выполнения теста:', testDuration.toFixed(2), 'ms');
+        
+        const success = testDuration < 1000; // Тест должен выполняться менее чем за 1 секунду
+        logTest('Производительность', success, 
+            `Время выполнения: ${testDuration.toFixed(2)}ms, скриптов: ${scripts.length}, память: ${performance.memory ? (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) + 'MB' : 'недоступно'}`);
+        return success;
+    } catch (error) {
+        console.error('❌ Ошибка проверки производительности:', error);
+        logTest('Производительность', false, error.message);
+        return false;
+    }
+}
+
+// Тест 14: Проверка безопасности
+function testSecurity() {
+    try {
+        console.log('🔍 Проверка безопасности...');
+        
+        let securityScore = 0;
+        const checks = [];
+        
+        // Проверяем HTTPS
+        const isHTTPS = window.location.protocol === 'https:';
+        checks.push({
+            name: 'HTTPS',
+            passed: isHTTPS,
+            message: isHTTPS ? 'Используется HTTPS' : 'Используется HTTP'
+        });
+        if (isHTTPS) securityScore++;
+        
+        // Проверяем Content Security Policy
+        const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        checks.push({
+            name: 'CSP',
+            passed: !!csp,
+            message: csp ? 'Content Security Policy настроен' : 'Content Security Policy не настроен'
+        });
+        if (csp) securityScore++;
+        
+        // Проверяем X-Frame-Options
+        const xFrameOptions = document.querySelector('meta[http-equiv="X-Frame-Options"]');
+        checks.push({
+            name: 'X-Frame-Options',
+            passed: !!xFrameOptions,
+            message: xFrameOptions ? 'X-Frame-Options настроен' : 'X-Frame-Options не настроен'
+        });
+        if (xFrameOptions) securityScore++;
+        
+        // Проверяем X-Content-Type-Options
+        const xContentTypeOptions = document.querySelector('meta[http-equiv="X-Content-Type-Options"]');
+        checks.push({
+            name: 'X-Content-Type-Options',
+            passed: !!xContentTypeOptions,
+            message: xContentTypeOptions ? 'X-Content-Type-Options настроен' : 'X-Content-Type-Options не настроен'
+        });
+        if (xContentTypeOptions) securityScore++;
+        
+        // Проверяем Referrer Policy
+        const referrerPolicy = document.querySelector('meta[name="referrer"]');
+        checks.push({
+            name: 'Referrer Policy',
+            passed: !!referrerPolicy,
+            message: referrerPolicy ? 'Referrer Policy настроен' : 'Referrer Policy не настроен'
+        });
+        if (referrerPolicy) securityScore++;
+        
+        // Проверяем наличие inline скриптов (потенциальная уязвимость)
+        const inlineScripts = document.querySelectorAll('script:not([src])');
+        checks.push({
+            name: 'Inline Scripts',
+            passed: inlineScripts.length === 0,
+            message: `Найдено inline скриптов: ${inlineScripts.length}`
+        });
+        if (inlineScripts.length === 0) securityScore++;
+        
+        // Проверяем наличие eval (потенциальная уязвимость)
+        const hasEval = document.documentElement.innerHTML.includes('eval(');
+        checks.push({
+            name: 'Eval Usage',
+            passed: !hasEval,
+            message: hasEval ? 'Найден eval() - потенциальная уязвимость' : 'eval() не используется'
+        });
+        if (!hasEval) securityScore++;
+        
+        console.log('📍 Результаты проверки безопасности:');
+        checks.forEach(check => {
+            console.log(`   - ${check.name}: ${check.passed ? '✅' : '❌'} ${check.message}`);
+        });
+        
+        const success = securityScore >= 3; // Минимум 3 из 7 проверок должны пройти
+        logTest('Безопасность', success, 
+            `Балл безопасности: ${securityScore}/7, проверок: ${checks.length}`);
+        return success;
+    } catch (error) {
+        console.error('❌ Ошибка проверки безопасности:', error);
+        logTest('Безопасность', false, error.message);
+        return false;
+    }
+}
+
+// Тест 15: Проверка загрузки скриптов
 function testScriptLoading() {
     try {
         console.log('🔍 Проверка загрузки скриптов...');
@@ -609,18 +874,61 @@ async function runAllTests() {
     console.log('   - User Agent:', navigator.userAgent);
     console.log('   - Размер окна:', window.innerWidth + 'x' + window.innerHeight);
     console.log('   - Время:', new Date().toLocaleString('ru-RU'));
+    console.log('   - Протокол:', window.location.protocol);
+    console.log('   - Хост:', window.location.host);
+    console.log('   - Путь:', window.location.pathname);
+    console.log('');
+    
+    // Детальная диагностика страницы
+    console.log('🔍 Детальная диагностика страницы:');
+    console.log('   - Заголовок:', document.title);
+    console.log('   - Количество элементов:', document.querySelectorAll('*').length);
+    console.log('   - Количество скриптов:', document.scripts.length);
+    console.log('   - Количество стилей:', document.styleSheets.length);
+    console.log('   - Количество форм:', document.forms.length);
+    console.log('   - Количество изображений:', document.images.length);
+    console.log('');
+    
+    // Проверяем загрузку ресурсов
+    console.log('🔍 Проверка загрузки ресурсов:');
+    const scripts = Array.from(document.scripts);
+    scripts.forEach((script, index) => {
+        console.log(`   - Скрипт ${index + 1}:`, script.src || 'inline');
+        if (script.src) {
+            console.log(`     - Загружен: ${script.readyState || 'unknown'}`);
+            console.log(`     - Асинхронный: ${script.async}`);
+            console.log(`     - Отложенный: ${script.defer}`);
+        }
+    });
+    console.log('');
+    
+    // Проверяем CSS
+    const stylesheets = Array.from(document.styleSheets);
+    console.log('🔍 Проверка CSS:');
+    stylesheets.forEach((sheet, index) => {
+        console.log(`   - Стиль ${index + 1}:`, sheet.href || 'inline');
+        if (sheet.href) {
+            try {
+                console.log(`     - Правил: ${sheet.cssRules ? sheet.cssRules.length : 'недоступно'}`);
+            } catch (e) {
+                console.log(`     - Правил: недоступно (CORS)`);
+            }
+        }
+    });
     console.log('');
     
     const tests = [
-        testMainAppPage,          // Новый тест - проверка основной страницы
-        testScriptLoading,        // Новый тест - проверка загрузки скриптов
+        testMainAppPage,          // Проверка основной страницы
+        testBackendAPI,           // Новый тест - проверка бэкенда API
+        testPerformance,          // Новый тест - проверка производительности
+        testSecurity,             // Новый тест - проверка безопасности
+        testScriptLoading,        // Проверка загрузки скриптов
         testAppInitialization,
         testDOMElements,
         testCSSClasses,
         testGlobalFunctions,
         testModals,
         testResponsiveness,
-        testPerformance,
         testFormValidation,
         test3DEffects,
         testChangeLogging
