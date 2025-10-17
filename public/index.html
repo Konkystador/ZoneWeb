@@ -109,10 +109,17 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="#" onclick="runAllTests()">
-                                <i class="fas fa-play"></i> Запустить тесты
+                                <i class="fas fa-play"></i> Быстрые тесты
                             </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="runComprehensiveTests()">
+                                <i class="fas fa-cogs"></i> Комплексные тесты
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="#" onclick="copyTestResults()">
-                                <i class="fas fa-copy"></i> Копировать результаты
+                                <i class="fas fa-copy"></i> Копировать быстрые
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="copyComprehensiveResults()">
+                                <i class="fas fa-copy"></i> Копировать комплексные
                             </a></li>
                         </ul>
                     </div>
@@ -1626,5 +1633,7 @@
     
     <!-- Тесты приложения -->
     <script src="js/app-tests.js?v=1"></script>
+    <!-- Комплексные тесты -->
+    <script src="js/comprehensive-tests.js?v=1"></script>
 </body>
 </html>

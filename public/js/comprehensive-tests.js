@@ -1,0 +1,560 @@
+// Комплексная система тестирования приложения "Оконные Мастера"
+// Включает все типы тестов: API, Frontend, Mobile, Security, Performance
+
+let comprehensiveTestResults = [];
+let passedTests = 0;
+let failedTests = 0;
+let currentTest = 0;
+
+// Функция логирования комплексных тестов
+function logComprehensiveTest(testName, success, details = '', category = 'general') {
+    const timestamp = new Date().toLocaleTimeString('ru-RU');
+    const result = {
+        name: testName,
+        success: success,
+        details: details,
+        category: category,
+        timestamp: timestamp
+    };
+    
+    comprehensiveTestResults.push(result);
+    
+    // Подробные логи
+    console.log('='.repeat(80));
+    console.log(`🧪 КОМПЛЕКСНЫЙ ТЕСТ: ${testName}`);
+    console.log(`📂 Категория: ${category}`);
+    console.log(`⏰ Время: ${timestamp}`);
+    console.log(`📊 Статус: ${success ? '✅ ПРОЙДЕН' : '❌ ПРОВАЛЕН'}`);
+    console.log(`📝 Детали: ${details}`);
+    console.log(`📈 Общий прогресс: ${currentTest + 1} тестов`);
+    console.log('='.repeat(80));
+    
+    if (success) {
+        passedTests++;
+        console.log(`✅ ${testName}: ${details}`);
+    } else {
+        failedTests++;
+        console.log(`❌ ${testName}: ${details}`);
+    }
+    
+    // Обновляем отображение на странице
+    updateComprehensiveTestResults();
+}
+
+// Обновление отображения результатов на странице
+function updateComprehensiveTestResults() {
+    const container = document.getElementById('comprehensiveTestResults');
+    if (!container) {
+        createComprehensiveTestContainer();
+        return;
+    }
+    
+    const successRate = Math.round((passedTests / (passedTests + failedTests)) * 100);
+    const statusClass = failedTests === 0 ? 'success' : 'warning';
+    
+    let html = `
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-vial"></i> Комплексные тесты приложения</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="copyComprehensiveResults()">
+                        <i class="fas fa-copy"></i> Копировать
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="hideComprehensiveResults()">
+                        <i class="fas fa-times"></i> Скрыть
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-${statusClass}">
+                    <h6><i class="fas fa-chart-bar"></i> Сводка результатов</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>✅ Пройдено:</strong> ${passedTests}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>❌ Провалено:</strong> ${failedTests}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>📈 Успешность:</strong> ${successRate}%
+                        </div>
+                        <div class="col-md-3">
+                            <strong>⏰ Время:</strong> ${new Date().toLocaleString('ru-RU')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6><i class="fas fa-list"></i> Результаты тестов по категориям</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Тест</th>
+                                    <th>Категория</th>
+                                    <th>Статус</th>
+                                    <th>Детали</th>
+                                    <th>Время</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+    `;
+    
+    comprehensiveTestResults.forEach(result => {
+        const statusIcon = result.success ? '✅' : '❌';
+        const statusClass = result.success ? 'success' : 'danger';
+        const categoryIcon = getCategoryIcon(result.category);
+        html += `
+            <tr>
+                <td><strong>${result.name}</strong></td>
+                <td><span class="badge bg-secondary">${categoryIcon} ${result.category}</span></td>
+                <td><span class="badge bg-${statusClass}">${statusIcon}</span></td>
+                <td><small>${result.details}</small></td>
+                <td><small>${result.timestamp}</small></td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Создание контейнера для результатов
+function createComprehensiveTestContainer() {
+    const container = document.createElement('div');
+    container.id = 'comprehensiveTestResults';
+    container.className = 'container-fluid mt-4';
+    
+    const mainContent = document.querySelector('.container-fluid');
+    if (mainContent) {
+        mainContent.appendChild(container);
+    } else {
+        document.body.appendChild(container);
+    }
+}
+
+// Получение иконки для категории
+function getCategoryIcon(category) {
+    const icons = {
+        'api': '🔌',
+        'frontend': '🖥️',
+        'mobile': '📱',
+        'security': '🔒',
+        'performance': '⚡',
+        'general': '🧪'
+    };
+    return icons[category] || '🧪';
+}
+
+// === API ТЕСТЫ ===
+
+// Тест API авторизации
+async function testAPIAuth() {
+    try {
+        console.log('🔍 Тестирование API авторизации...');
+        
+        const baseUrl = window.location.origin;
+        const response = await fetch(`${baseUrl}/api/auth/check`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        const success = response.ok && data.success;
+        
+        logComprehensiveTest('API авторизации', success, 
+            `Статус: ${response.status}, Успех: ${data.success}, Пользователь: ${data.user ? data.user.username : 'нет'}`, 'api');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('API авторизации', false, `Ошибка: ${error.message}`, 'api');
+        return false;
+    }
+}
+
+// Тест API пользователей
+async function testAPIUsers() {
+    try {
+        console.log('🔍 Тестирование API пользователей...');
+        
+        const baseUrl = window.location.origin;
+        const response = await fetch(`${baseUrl}/api/users`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        const success = response.ok && Array.isArray(data);
+        
+        logComprehensiveTest('API пользователей', success, 
+            `Статус: ${response.status}, Пользователей: ${Array.isArray(data) ? data.length : 0}`, 'api');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('API пользователей', false, `Ошибка: ${error.message}`, 'api');
+        return false;
+    }
+}
+
+// Тест API заказов
+async function testAPIOrders() {
+    try {
+        console.log('🔍 Тестирование API заказов...');
+        
+        const baseUrl = window.location.origin;
+        const response = await fetch(`${baseUrl}/api/orders`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        const success = response.ok && Array.isArray(data);
+        
+        logComprehensiveTest('API заказов', success, 
+            `Статус: ${response.status}, Заказов: ${Array.isArray(data) ? data.length : 0}`, 'api');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('API заказов', false, `Ошибка: ${error.message}`, 'api');
+        return false;
+    }
+}
+
+// === FRONTEND ТЕСТЫ ===
+
+// Тест инициализации приложения
+function testFrontendInitialization() {
+    try {
+        console.log('🔍 Тестирование инициализации фронтенда...');
+        
+        const app = window.app;
+        const WindowRepairApp = window.WindowRepairApp;
+        const hasMethods = app && typeof app.showOrderCards === 'function';
+        
+        const success = !!(app && WindowRepairApp && hasMethods);
+        
+        logComprehensiveTest('Инициализация фронтенда', success, 
+            `app: ${app ? 'да' : 'нет'}, WindowRepairApp: ${WindowRepairApp ? 'да' : 'нет'}, методы: ${hasMethods ? 'да' : 'нет'}`, 'frontend');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('Инициализация фронтенда', false, `Ошибка: ${error.message}`, 'frontend');
+        return false;
+    }
+}
+
+// Тест DOM элементов
+function testFrontendDOM() {
+    try {
+        console.log('🔍 Тестирование DOM элементов...');
+        
+        const elements = ['mainApp', 'loginScreen', 'newOrderModal'];
+        let foundElements = 0;
+        
+        elements.forEach(id => {
+            if (document.getElementById(id)) {
+                foundElements++;
+            }
+        });
+        
+        const success = foundElements >= 2;
+        
+        logComprehensiveTest('DOM элементы', success, 
+            `Найдено: ${foundElements}/${elements.length}`, 'frontend');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('DOM элементы', false, `Ошибка: ${error.message}`, 'frontend');
+        return false;
+    }
+}
+
+// === MOBILE ТЕСТЫ ===
+
+// Тест адаптивности
+function testMobileResponsive() {
+    try {
+        console.log('🔍 Тестирование мобильной адаптивности...');
+        
+        const viewport = document.querySelector('meta[name="viewport"]');
+        const hasViewport = !!viewport;
+        
+        const bootstrapClasses = ['container', 'row', 'col-12', 'col-sm-6', 'col-md-3'];
+        let foundClasses = 0;
+        
+        bootstrapClasses.forEach(className => {
+            if (className.includes('-')) {
+                if (document.querySelectorAll(`[class*="${className}"]`).length > 0) {
+                    foundClasses++;
+                }
+            } else {
+                if (document.querySelectorAll(`.${className}`).length > 0) {
+                    foundClasses++;
+                }
+            }
+        });
+        
+        const success = hasViewport && foundClasses >= 3;
+        
+        logComprehensiveTest('Мобильная адаптивность', success, 
+            `Viewport: ${hasViewport ? 'да' : 'нет'}, Bootstrap классов: ${foundClasses}/${bootstrapClasses.length}`, 'mobile');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('Мобильная адаптивность', false, `Ошибка: ${error.message}`, 'mobile');
+        return false;
+    }
+}
+
+// === SECURITY ТЕСТЫ ===
+
+// Тест безопасности
+function testSecurity() {
+    try {
+        console.log('🔍 Тестирование безопасности...');
+        
+        const isHTTPS = window.location.protocol === 'https:';
+        const hasCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        const hasInlineScripts = document.querySelectorAll('script:not([src])').length > 0;
+        
+        const success = isHTTPS || !hasInlineScripts; // HTTPS или нет inline скриптов
+        
+        logComprehensiveTest('Безопасность', success, 
+            `HTTPS: ${isHTTPS ? 'да' : 'нет'}, CSP: ${hasCSP ? 'да' : 'нет'}, Inline скрипты: ${hasInlineScripts ? 'да' : 'нет'}`, 'security');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('Безопасность', false, `Ошибка: ${error.message}`, 'security');
+        return false;
+    }
+}
+
+// === PERFORMANCE ТЕСТЫ ===
+
+// Тест производительности
+function testPerformance() {
+    try {
+        console.log('🔍 Тестирование производительности...');
+        
+        const startTime = performance.now();
+        
+        // Проверяем время загрузки
+        const navigation = performance.getEntriesByType('navigation')[0];
+        let loadTime = 0;
+        
+        if (navigation && navigation.loadEventEnd && navigation.navigationStart) {
+            loadTime = navigation.loadEventEnd - navigation.navigationStart;
+        } else {
+            loadTime = performance.now();
+        }
+        
+        // Проверяем память
+        let memoryUsage = 0;
+        if (performance.memory) {
+            memoryUsage = performance.memory.usedJSHeapSize / 1024 / 1024;
+        }
+        
+        const endTime = performance.now();
+        const testDuration = endTime - startTime;
+        
+        // Мягкие критерии
+        const loadTimeOk = loadTime < 15000 || loadTime === 0;
+        const testDurationOk = testDuration < 5000;
+        const memoryOk = memoryUsage < 500 || memoryUsage === 0;
+        
+        const success = testDurationOk && loadTimeOk && memoryOk;
+        
+        logComprehensiveTest('Производительность', success, 
+            `Загрузка: ${loadTime.toFixed(2)}ms, Тест: ${testDuration.toFixed(2)}ms, Память: ${memoryUsage.toFixed(2)}MB`, 'performance');
+        return success;
+    } catch (error) {
+        logComprehensiveTest('Производительность', false, `Ошибка: ${error.message}`, 'performance');
+        return false;
+    }
+}
+
+// === ОСНОВНЫЕ ФУНКЦИИ ===
+
+// Запуск всех комплексных тестов
+async function runComprehensiveTests() {
+    console.log('🚀 ЗАПУСК КОМПЛЕКСНЫХ ТЕСТОВ ПРИЛОЖЕНИЯ');
+    console.log('='.repeat(100));
+    console.log('📍 URL:', window.location.href);
+    console.log('📍 User Agent:', navigator.userAgent);
+    console.log('📍 Размер экрана:', window.innerWidth + 'x' + window.innerHeight);
+    console.log('📍 Время:', new Date().toLocaleString('ru-RU'));
+    console.log('='.repeat(100));
+    console.log('');
+    
+    // Очищаем предыдущие результаты
+    comprehensiveTestResults = [];
+    passedTests = 0;
+    failedTests = 0;
+    currentTest = 0;
+    
+    // Показываем индикатор загрузки
+    createComprehensiveTestContainer();
+    updateComprehensiveTestResults();
+    
+    const tests = [
+        // API тесты
+        { name: 'API авторизации', func: testAPIAuth, category: 'api' },
+        { name: 'API пользователей', func: testAPIUsers, category: 'api' },
+        { name: 'API заказов', func: testAPIOrders, category: 'api' },
+        
+        // Frontend тесты
+        { name: 'Инициализация фронтенда', func: testFrontendInitialization, category: 'frontend' },
+        { name: 'DOM элементы', func: testFrontendDOM, category: 'frontend' },
+        
+        // Mobile тесты
+        { name: 'Мобильная адаптивность', func: testMobileResponsive, category: 'mobile' },
+        
+        // Security тесты
+        { name: 'Безопасность', func: testSecurity, category: 'security' },
+        
+        // Performance тесты
+        { name: 'Производительность', func: testPerformance, category: 'performance' }
+    ];
+    
+    for (const test of tests) {
+        try {
+            console.log(`\n🔄 Выполнение теста: ${test.name}`);
+            await test.func();
+            currentTest++;
+        } catch (error) {
+            console.error(`❌ Ошибка в тесте ${test.name}:`, error);
+            logComprehensiveTest(test.name, false, `Исключение: ${error.message}`, test.category);
+            currentTest++;
+        }
+    }
+    
+    // Итоговые результаты
+    console.log('\n🏁 ИТОГОВЫЕ РЕЗУЛЬТАТЫ КОМПЛЕКСНЫХ ТЕСТОВ');
+    console.log('='.repeat(100));
+    console.log(`✅ Пройдено: ${passedTests}`);
+    console.log(`❌ Провалено: ${failedTests}`);
+    console.log(`📈 Успешность: ${Math.round((passedTests / (passedTests + failedTests)) * 100)}%`);
+    console.log(`⏱️ Время выполнения: ${((Date.now() - performance.now()) / 1000).toFixed(2)} секунд`);
+    console.log('='.repeat(100));
+    
+    if (failedTests > 0) {
+        console.log('⚠️ НЕКОТОРЫЕ ТЕСТЫ ПРОВАЛИЛИСЬ:');
+        comprehensiveTestResults.filter(r => !r.success).forEach(result => {
+            console.log(`   ❌ ${result.name}: ${result.details}`);
+        });
+    } else {
+        console.log('🎉 ВСЕ ТЕСТЫ ПРОШЛИ УСПЕШНО!');
+    }
+    
+    return {
+        passed: passedTests,
+        failed: failedTests,
+        successRate: Math.round((passedTests / (passedTests + failedTests)) * 100),
+        results: comprehensiveTestResults
+    };
+}
+
+// Функция для копирования результатов
+function copyComprehensiveResults() {
+    let text = '📊 Результаты комплексных тестов приложения\n\n';
+    text += `✅ Пройдено: ${passedTests}\n`;
+    text += `❌ Провалено: ${failedTests}\n`;
+    text += `📈 Успешность: ${Math.round((passedTests / (passedTests + failedTests)) * 100)}%\n`;
+    text += `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n`;
+    
+    text += 'Результаты тестов:\n';
+    comprehensiveTestResults.forEach(result => {
+        const status = result.success ? '✅' : '❌';
+        text += `${status} ${result.name} (${result.category})\n`;
+        text += `   ${result.details}\n`;
+        text += `   ${result.timestamp}\n\n`;
+    });
+    
+    // Проверяем поддержку clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('📋 Результаты скопированы в буфер обмена!');
+            showAlert('Результаты скопированы в буфер обмена!', 'success');
+        }).catch(err => {
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+// Fallback функция для копирования
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            console.log('📋 Результаты скопированы в буфер обмена!');
+            showAlert('Результаты скопированы в буфер обмена!', 'success');
+        } else {
+            throw new Error('Copy command failed');
+        }
+    } catch (err) {
+        console.error('Ошибка копирования:', err);
+        showAlert('Ошибка копирования. Результаты выведены в консоль.', 'warning');
+        console.log('Результаты тестов:');
+        console.log(text);
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Функция для скрытия результатов
+function hideComprehensiveResults() {
+    const container = document.getElementById('comprehensiveTestResults');
+    if (container) {
+        container.innerHTML = '';
+        console.log('✅ Результаты комплексных тестов скрыты');
+    }
+}
+
+// Функция для показа уведомлений
+function showAlert(message, type) {
+    if (window.app && window.app.showAlert) {
+        window.app.showAlert(message, type);
+    } else {
+        // Fallback уведомление
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 5000);
+    }
+}
+
+// Добавляем функции в глобальную область видимости
+window.runComprehensiveTests = runComprehensiveTests;
+window.copyComprehensiveResults = copyComprehensiveResults;
+window.hideComprehensiveResults = hideComprehensiveResults;
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📱 Комплексные тесты приложения загружены');
+    console.log('📍 Для запуска тестов выполните: runComprehensiveTests()');
+    console.log('📍 Для копирования результатов: copyComprehensiveResults()');
+});
