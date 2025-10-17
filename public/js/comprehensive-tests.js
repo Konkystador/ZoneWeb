@@ -41,11 +41,32 @@ function logComprehensiveTest(testName, success, details = '', category = 'gener
     updateComprehensiveTestResults();
 }
 
+// Функция для отображения статуса комплексных тестов
+function showComprehensiveTestResults(message, type = 'info') {
+    console.log('📊 showComprehensiveTestResults вызвана:', message, type);
+    
+    // Обновляем статус тестирования
+    const statusElement = document.getElementById('testStatus');
+    const statusTextElement = document.getElementById('testStatusText');
+    
+    if (statusElement && statusTextElement) {
+        statusElement.style.display = 'block';
+        statusTextElement.textContent = message;
+        statusElement.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'}`;
+    }
+    
+    // Прокручиваем к результатам
+    const resultsContainer = document.getElementById('testResults');
+    if (resultsContainer) {
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
 // Обновление отображения результатов на странице
 function updateComprehensiveTestResults() {
-    const container = document.getElementById('comprehensiveTestResults');
+    const container = document.getElementById('testResultsContent');
     if (!container) {
-        createComprehensiveTestContainer();
+        console.error('❌ Элемент testResultsContent не найден');
         return;
     }
     
@@ -377,6 +398,18 @@ async function runComprehensiveTests() {
     currentTest = 0;
     
     // Показываем индикатор загрузки
+    showComprehensiveTestResults('🔄 Запуск комплексных тестов...', 'info');
+    
+    // Показываем прогресс-бар
+    const progressElement = document.getElementById('testProgress');
+    if (progressElement) {
+        progressElement.style.display = 'block';
+        const progressBar = progressElement.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '0%';
+        }
+    }
+    
     createComprehensiveTestContainer();
     updateComprehensiveTestResults();
     

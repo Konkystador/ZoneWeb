@@ -602,7 +602,17 @@ async function runAllTests() {
     failedTests = 0;
     
     // Показываем индикатор загрузки
-    showTestResults('🔄 Запуск тестов...', 'info');
+    showTestResults('🔄 Запуск быстрых тестов...', 'info');
+    
+    // Показываем прогресс-бар
+    const progressElement = document.getElementById('testProgress');
+    if (progressElement) {
+        progressElement.style.display = 'block';
+        const progressBar = progressElement.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '0%';
+        }
+    }
     
     const tests = [
         testAppInitialization,
@@ -617,9 +627,25 @@ async function runAllTests() {
         testResponsiveness
     ];
     
-    for (const test of tests) {
+    for (let i = 0; i < tests.length; i++) {
         try {
-            await test();
+            console.log(`\n🔄 Выполнение теста ${i + 1}/${tests.length}`);
+            
+            // Обновляем прогресс
+            const progressElement = document.getElementById('testProgress');
+            if (progressElement) {
+                const progressBar = progressElement.querySelector('.progress-bar');
+                if (progressBar) {
+                    const progress = Math.round(((i + 1) / tests.length) * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.setAttribute('aria-valuenow', progress);
+                }
+            }
+            
+            // Обновляем статус
+            showTestResults(`🔄 Выполнение теста ${i + 1}/${tests.length}`, 'info');
+            
+            await tests[i]();
         } catch (error) {
             console.error('❌ Ошибка в тесте:', error);
             logTest('Ошибка теста', false, error.message);
@@ -674,42 +700,21 @@ async function runAllTests() {
 function showTestResults(message, type = 'info') {
     console.log('📊 showTestResults вызвана:', message, type);
     
-    // Ищем существующий элемент testResults
-    let resultsContainer = document.getElementById('testResults');
-    console.log('📊 Контейнер testResults найден:', !!resultsContainer);
+    // Обновляем статус тестирования
+    const statusElement = document.getElementById('testStatus');
+    const statusTextElement = document.getElementById('testStatusText');
     
-    if (!resultsContainer) {
-        console.log('📊 Создаем новый контейнер testResults');
-        // Создаем контейнер если его нет
-        resultsContainer = document.createElement('div');
-        resultsContainer.id = 'testResults';
-        resultsContainer.className = 'container-fluid mt-4';
-        
-        // Добавляем в основной контент
-        const mainContent = document.querySelector('.container-fluid');
-        if (mainContent) {
-            mainContent.appendChild(resultsContainer);
-            console.log('📊 Контейнер добавлен в mainContent');
-        } else {
-            document.body.appendChild(resultsContainer);
-            console.log('📊 Контейнер добавлен в body');
-        }
+    if (statusElement && statusTextElement) {
+        statusElement.style.display = 'block';
+        statusTextElement.textContent = message;
+        statusElement.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'}`;
     }
     
-    // Показываем сообщение
-    const alertClass = type === 'success' ? 'alert-success' : 
-                      type === 'error' ? 'alert-danger' : 
-                      type === 'warning' ? 'alert-warning' : 'alert-info';
-    
-    resultsContainer.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show">
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>`;
-    
-    console.log('📊 Сообщение отображено в контейнере');
-    
     // Прокручиваем к результатам
-    resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    const resultsContainer = document.getElementById('testResults');
+    if (resultsContainer) {
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 // Функция для отображения полных результатов
@@ -791,35 +796,26 @@ function displayTestResults() {
     
     console.log('🔍 HTML сгенерирован, длина:', html.length);
     
-    const content = document.getElementById('testResults');
-    console.log('🔍 testResults найден:', !!content);
+    const content = document.getElementById('testResultsContent');
+    console.log('🔍 testResultsContent найден:', !!content);
     
     if (content) {
         content.innerHTML = html;
         console.log('✅ Результаты отображены на сайте');
         
+        // Скрываем статус и прогресс
+        const statusElement = document.getElementById('testStatus');
+        const progressElement = document.getElementById('testProgress');
+        if (statusElement) statusElement.style.display = 'none';
+        if (progressElement) progressElement.style.display = 'none';
+        
         // Прокручиваем к результатам
-        content.scrollIntoView({ behavior: 'smooth' });
-    } else {
-        console.error('❌ Элемент testResults не найден');
-        
-        // Создаем контейнер если его нет
-        const newContainer = document.createElement('div');
-        newContainer.id = 'testResults';
-        newContainer.className = 'container-fluid mt-4';
-        newContainer.innerHTML = html;
-        
-        const mainContent = document.querySelector('.container-fluid');
-        if (mainContent) {
-            mainContent.appendChild(newContainer);
-            console.log('✅ Новый контейнер создан и добавлен');
-        } else {
-            document.body.appendChild(newContainer);
-            console.log('✅ Новый контейнер создан и добавлен в body');
+        const resultsContainer = document.getElementById('testResults');
+        if (resultsContainer) {
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
         }
-        
-        // Прокручиваем к результатам
-        newContainer.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        console.error('❌ Элемент testResultsContent не найден');
     }
 }
 

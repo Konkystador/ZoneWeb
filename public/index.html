@@ -103,25 +103,10 @@
                     <span class="navbar-text">
                         <i class="fas fa-user"></i> <span id="userName"></span>
                     </span>
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <div class="nav-item">
+                        <a class="nav-link" href="#" data-page="testing">
                             <i class="fas fa-vial"></i> Тесты
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="runAllTests()">
-                                <i class="fas fa-play"></i> Быстрые тесты
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="runComprehensiveTests()">
-                                <i class="fas fa-cogs"></i> Комплексные тесты
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" onclick="copyTestResults()">
-                                <i class="fas fa-copy"></i> Копировать быстрые
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="copyComprehensiveResults()">
-                                <i class="fas fa-copy"></i> Копировать комплексные
-                            </a></li>
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -1515,9 +1500,59 @@
             
             <!-- Контейнер для результатов тестов -->
             <div id="testResults" class="mt-4">
-                <div class="text-center text-muted">
-                    <i class="fas fa-vial fa-3x mb-3"></i>
-                    <p>Выберите тип тестирования из меню выше</p>
+                <!-- Панель управления тестами -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-vial"></i> Панель тестирования</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Кнопки запуска тестов -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <button class="btn btn-primary w-100" onclick="runAllTests()">
+                                    <i class="fas fa-play"></i> Быстрые тесты
+                                    <small class="d-block">9 тестов</small>
+                                </button>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <button class="btn btn-success w-100" onclick="runComprehensiveTests()">
+                                    <i class="fas fa-cogs"></i> Комплексные тесты
+                                    <small class="d-block">6 тестов</small>
+                                </button>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <button class="btn btn-info w-100" onclick="copyTestResults()">
+                                    <i class="fas fa-copy"></i> Копировать быстрые
+                                    <small class="d-block">Результаты</small>
+                                </button>
+                            </div>
+                            <div class="col-12 col-sm-6 col-md-3">
+                                <button class="btn btn-warning w-100" onclick="copyComprehensiveResults()">
+                                    <i class="fas fa-copy"></i> Копировать комплексные
+                                    <small class="d-block">Результаты</small>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Статус тестирования -->
+                        <div id="testStatus" class="alert alert-info" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> <span id="testStatusText">Запуск тестов...</span>
+                        </div>
+                        
+                        <!-- Прогресс-бар -->
+                        <div id="testProgress" class="progress mb-3" style="display: none;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Результаты тестов -->
+                <div id="testResultsContent">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-vial fa-3x mb-3"></i>
+                        <p>Выберите тип тестирования выше</p>
+                    </div>
                 </div>
             </div>
             
