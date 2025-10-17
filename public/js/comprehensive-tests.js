@@ -2,8 +2,8 @@
 // Включает все типы тестов: API, Frontend, Mobile, Security, Performance
 
 let comprehensiveTestResults = [];
-let passedTests = 0;
-let failedTests = 0;
+let comprehensivePassedTests = 0;
+let comprehensiveFailedTests = 0;
 let currentTest = 0;
 
 // Функция логирования комплексных тестов
@@ -30,10 +30,10 @@ function logComprehensiveTest(testName, success, details = '', category = 'gener
     console.log('='.repeat(80));
     
     if (success) {
-        passedTests++;
+        comprehensivePassedTests++;
         console.log(`✅ ${testName}: ${details}`);
     } else {
-        failedTests++;
+        comprehensiveFailedTests++;
         console.log(`❌ ${testName}: ${details}`);
     }
     
@@ -49,8 +49,8 @@ function updateComprehensiveTestResults() {
         return;
     }
     
-    const successRate = Math.round((passedTests / (passedTests + failedTests)) * 100);
-    const statusClass = failedTests === 0 ? 'success' : 'warning';
+    const successRate = Math.round((comprehensivePassedTests / (comprehensivePassedTests + comprehensiveFailedTests)) * 100);
+    const statusClass = comprehensiveFailedTests === 0 ? 'success' : 'warning';
     
     let html = `
         <div class="card">
@@ -70,10 +70,10 @@ function updateComprehensiveTestResults() {
                     <h6><i class="fas fa-chart-bar"></i> Сводка результатов</h6>
                     <div class="row">
                         <div class="col-md-3">
-                            <strong>✅ Пройдено:</strong> ${passedTests}
+                            <strong>✅ Пройдено:</strong> ${comprehensivePassedTests}
                         </div>
                         <div class="col-md-3">
-                            <strong>❌ Провалено:</strong> ${failedTests}
+                            <strong>❌ Провалено:</strong> ${comprehensiveFailedTests}
                         </div>
                         <div class="col-md-3">
                             <strong>📈 Успешность:</strong> ${successRate}%
@@ -372,8 +372,8 @@ async function runComprehensiveTests() {
     
     // Очищаем предыдущие результаты
     comprehensiveTestResults = [];
-    passedTests = 0;
-    failedTests = 0;
+    comprehensivePassedTests = 0;
+    comprehensiveFailedTests = 0;
     currentTest = 0;
     
     // Показываем индикатор загрузки
@@ -413,13 +413,13 @@ async function runComprehensiveTests() {
     // Итоговые результаты
     console.log('\n🏁 ИТОГОВЫЕ РЕЗУЛЬТАТЫ КОМПЛЕКСНЫХ ТЕСТОВ');
     console.log('='.repeat(100));
-    console.log(`✅ Пройдено: ${passedTests}`);
-    console.log(`❌ Провалено: ${failedTests}`);
-    console.log(`📈 Успешность: ${Math.round((passedTests / (passedTests + failedTests)) * 100)}%`);
+    console.log(`✅ Пройдено: ${comprehensivePassedTests}`);
+    console.log(`❌ Провалено: ${comprehensiveFailedTests}`);
+    console.log(`📈 Успешность: ${Math.round((comprehensivePassedTests / (comprehensivePassedTests + comprehensiveFailedTests)) * 100)}%`);
     console.log(`⏱️ Время выполнения: ${((Date.now() - performance.now()) / 1000).toFixed(2)} секунд`);
     console.log('='.repeat(100));
     
-    if (failedTests > 0) {
+    if (comprehensiveFailedTests > 0) {
         console.log('⚠️ НЕКОТОРЫЕ ТЕСТЫ ПРОВАЛИЛИСЬ:');
         comprehensiveTestResults.filter(r => !r.success).forEach(result => {
             console.log(`   ❌ ${result.name}: ${result.details}`);
@@ -429,9 +429,9 @@ async function runComprehensiveTests() {
     }
     
     return {
-        passed: passedTests,
-        failed: failedTests,
-        successRate: Math.round((passedTests / (passedTests + failedTests)) * 100),
+        passed: comprehensivePassedTests,
+        failed: comprehensiveFailedTests,
+        successRate: Math.round((comprehensivePassedTests / (comprehensivePassedTests + comprehensiveFailedTests)) * 100),
         results: comprehensiveTestResults
     };
 }
@@ -439,9 +439,9 @@ async function runComprehensiveTests() {
 // Функция для копирования результатов
 function copyComprehensiveResults() {
     let text = '📊 Результаты комплексных тестов приложения\n\n';
-    text += `✅ Пройдено: ${passedTests}\n`;
-    text += `❌ Провалено: ${failedTests}\n`;
-    text += `📈 Успешность: ${Math.round((passedTests / (passedTests + failedTests)) * 100)}%\n`;
+    text += `✅ Пройдено: ${comprehensivePassedTests}\n`;
+    text += `❌ Провалено: ${comprehensiveFailedTests}\n`;
+    text += `📈 Успешность: ${Math.round((comprehensivePassedTests / (comprehensivePassedTests + comprehensiveFailedTests)) * 100)}%\n`;
     text += `⏰ Время: ${new Date().toLocaleString('ru-RU')}\n\n`;
     
     text += 'Результаты тестов:\n';
