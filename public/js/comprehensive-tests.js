@@ -364,6 +364,12 @@ async function runComprehensiveTests() {
     console.log('='.repeat(100));
     console.log('');
     
+    // Переходим на страницу тестирования
+    if (window.app && window.app.showPage) {
+        window.app.showPage('testing');
+        console.log('📱 Переход на страницу тестирования');
+    }
+    
     // Очищаем предыдущие результаты
     comprehensiveTestResults = [];
     passedTests = 0;

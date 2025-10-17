@@ -590,6 +590,12 @@ async function runAllTests() {
     console.log('='.repeat(80));
     console.log('');
     
+    // Переходим на страницу тестирования
+    if (window.app && window.app.showPage) {
+        window.app.showPage('testing');
+        console.log('📱 Переход на страницу тестирования');
+    }
+    
     // Очищаем предыдущие результаты
     testResults = [];
     passedTests = 0;
@@ -666,10 +672,14 @@ async function runAllTests() {
 
 // Функция для отображения результатов на сайте
 function showTestResults(message, type = 'info') {
+    console.log('📊 showTestResults вызвана:', message, type);
+    
     // Ищем существующий элемент testResults
     let resultsContainer = document.getElementById('testResults');
+    console.log('📊 Контейнер testResults найден:', !!resultsContainer);
     
     if (!resultsContainer) {
+        console.log('📊 Создаем новый контейнер testResults');
         // Создаем контейнер если его нет
         resultsContainer = document.createElement('div');
         resultsContainer.id = 'testResults';
@@ -679,13 +689,27 @@ function showTestResults(message, type = 'info') {
         const mainContent = document.querySelector('.container-fluid');
         if (mainContent) {
             mainContent.appendChild(resultsContainer);
+            console.log('📊 Контейнер добавлен в mainContent');
         } else {
             document.body.appendChild(resultsContainer);
+            console.log('📊 Контейнер добавлен в body');
         }
     }
     
     // Показываем сообщение
-    resultsContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+    
+    resultsContainer.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>`;
+    
+    console.log('📊 Сообщение отображено в контейнере');
+    
+    // Прокручиваем к результатам
+    resultsContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Функция для отображения полных результатов
@@ -773,11 +797,29 @@ function displayTestResults() {
     if (content) {
         content.innerHTML = html;
         console.log('✅ Результаты отображены на сайте');
+        
+        // Прокручиваем к результатам
+        content.scrollIntoView({ behavior: 'smooth' });
     } else {
         console.error('❌ Элемент testResults не найден');
-        // Fallback - показываем в консоли
-        console.log('Результаты тестов:');
-        console.log(html);
+        
+        // Создаем контейнер если его нет
+        const newContainer = document.createElement('div');
+        newContainer.id = 'testResults';
+        newContainer.className = 'container-fluid mt-4';
+        newContainer.innerHTML = html;
+        
+        const mainContent = document.querySelector('.container-fluid');
+        if (mainContent) {
+            mainContent.appendChild(newContainer);
+            console.log('✅ Новый контейнер создан и добавлен');
+        } else {
+            document.body.appendChild(newContainer);
+            console.log('✅ Новый контейнер создан и добавлен в body');
+        }
+        
+        // Прокручиваем к результатам
+        newContainer.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
