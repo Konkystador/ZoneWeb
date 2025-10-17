@@ -515,49 +515,26 @@ async function runAllTests() {
 
 // Функция для отображения результатов на сайте
 function showTestResults(message, type = 'info') {
-    // Создаем или находим контейнер для результатов
-    let resultsContainer = document.getElementById('testResultsContainer');
+    // Ищем существующий элемент testResults
+    let resultsContainer = document.getElementById('testResults');
+    
     if (!resultsContainer) {
+        // Создаем контейнер если его нет
         resultsContainer = document.createElement('div');
-        resultsContainer.id = 'testResultsContainer';
+        resultsContainer.id = 'testResults';
         resultsContainer.className = 'container-fluid mt-4';
-        resultsContainer.innerHTML = `
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0"><i class="fas fa-vial"></i> Результаты тестирования</h5>
-                            <div>
-                                <button class="btn btn-sm btn-outline-primary me-2" onclick="copyTestResults()">
-                                    <i class="fas fa-copy"></i> Копировать
-                                </button>
-                                <button class="btn btn-sm btn-outline-secondary" onclick="hideTestResults()">
-                                    <i class="fas fa-times"></i> Скрыть
-                                </button>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div id="testResultsContent"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
         
-        // Добавляем контейнер в основной контент
+        // Добавляем в основной контент
         const mainContent = document.querySelector('.container-fluid');
         if (mainContent) {
             mainContent.appendChild(resultsContainer);
         } else {
-            // Fallback - добавляем в body
             document.body.appendChild(resultsContainer);
         }
     }
     
-    const content = document.getElementById('testResultsContent');
-    if (content) {
-        content.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-    }
+    // Показываем сообщение
+    resultsContainer.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
 }
 
 // Функция для отображения полных результатов
@@ -569,37 +546,50 @@ function displayTestResults() {
     const statusClass = failedTests === 0 ? 'success' : 'warning';
     
     let html = `
-        <div class="alert alert-${statusClass}">
-            <h6><i class="fas fa-chart-bar"></i> Сводка результатов</h6>
-            <div class="row">
-                <div class="col-md-3">
-                    <strong>✅ Пройдено:</strong> ${passedTests}
-                </div>
-                <div class="col-md-3">
-                    <strong>❌ Провалено:</strong> ${failedTests}
-                </div>
-                <div class="col-md-3">
-                    <strong>📈 Успешность:</strong> ${successRate}%
-                </div>
-                <div class="col-md-3">
-                    <strong>⏰ Время:</strong> ${new Date().toLocaleString('ru-RU')}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-vial"></i> Результаты тестирования</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="copyTestResults()">
+                        <i class="fas fa-copy"></i> Копировать
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="hideTestResults()">
+                        <i class="fas fa-times"></i> Скрыть
+                    </button>
                 </div>
             </div>
-        </div>
-        
-        <div class="mt-3">
-            <h6><i class="fas fa-list"></i> Детальные результаты</h6>
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Тест</th>
-                            <th>Статус</th>
-                            <th>Детали</th>
-                            <th>Время</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            <div class="card-body">
+                <div class="alert alert-${statusClass}">
+                    <h6><i class="fas fa-chart-bar"></i> Сводка результатов</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>✅ Пройдено:</strong> ${passedTests}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>❌ Провалено:</strong> ${failedTests}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>📈 Успешность:</strong> ${successRate}%
+                        </div>
+                        <div class="col-md-3">
+                            <strong>⏰ Время:</strong> ${new Date().toLocaleString('ru-RU')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6><i class="fas fa-list"></i> Детальные результаты</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Тест</th>
+                                    <th>Статус</th>
+                                    <th>Детали</th>
+                                    <th>Время</th>
+                                </tr>
+                            </thead>
+                            <tbody>
     `;
     
     testResults.forEach(result => {
@@ -616,22 +606,24 @@ function displayTestResults() {
     });
     
     html += `
-                    </tbody>
-                </table>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     `;
     
     console.log('🔍 HTML сгенерирован, длина:', html.length);
     
-    const content = document.getElementById('testResultsContent');
-    console.log('🔍 testResultsContent найден:', !!content);
+    const content = document.getElementById('testResults');
+    console.log('🔍 testResults найден:', !!content);
     
     if (content) {
         content.innerHTML = html;
         console.log('✅ Результаты отображены на сайте');
     } else {
-        console.error('❌ Элемент testResultsContent не найден');
+        console.error('❌ Элемент testResults не найден');
         // Fallback - показываем в консоли
         console.log('Результаты тестов:');
         console.log(html);
@@ -640,9 +632,10 @@ function displayTestResults() {
 
 // Функция для скрытия результатов
 function hideTestResults() {
-    const container = document.getElementById('testResultsContainer');
+    const container = document.getElementById('testResults');
     if (container) {
-        container.remove();
+        container.innerHTML = '';
+        console.log('✅ Результаты тестов скрыты');
     }
 }
 
