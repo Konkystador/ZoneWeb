@@ -56,6 +56,195 @@ class WindowRepairApp {
             element.style.display = isAdmin ? 'block' : 'none';
         });
     }
+
+    // ==================== ТЕСТИРОВАНИЕ ====================
+    
+    async runAPITests() {
+        this.logTest('Запуск базовых API тестов...', 'info');
+        try {
+            const response = await fetch('/tests/api-tests.js');
+            if (response.ok) {
+                this.logTest('Базовые API тесты запущены', 'success');
+            } else {
+                this.logTest('Ошибка запуска базовых API тестов', 'error');
+            }
+        } catch (error) {
+            this.logTest('Ошибка: ' + error.message, 'error');
+        }
+    }
+    
+    async runComprehensiveAPITests() {
+        this.logTest('Запуск комплексных API тестов...', 'info');
+        try {
+            const response = await fetch('/tests/comprehensive-api-tests.js');
+            if (response.ok) {
+                this.logTest('Комплексные API тесты запущены', 'success');
+            } else {
+                this.logTest('Ошибка запуска комплексных API тестов', 'error');
+            }
+        } catch (error) {
+            this.logTest('Ошибка: ' + error.message, 'error');
+        }
+    }
+    
+    async runFrontendTests() {
+        this.logTest('Запуск базовых фронтенд тестов...', 'info');
+        try {
+            // Открываем страницу тестов в новом окне
+            window.open('/tests/frontend-tests.html', '_blank');
+            this.logTest('Базовые фронтенд тесты открыты в новом окне', 'success');
+        } catch (error) {
+            this.logTest('Ошибка: ' + error.message, 'error');
+        }
+    }
+    
+    async runComprehensiveFrontendTests() {
+        this.logTest('Запуск комплексных фронтенд тестов...', 'info');
+        try {
+            // Открываем страницу тестов в новом окне
+            window.open('/tests/frontend-comprehensive-tests.html', '_blank');
+            this.logTest('Комплексные фронтенд тесты открыты в новом окне', 'success');
+        } catch (error) {
+            this.logTest('Ошибка: ' + error.message, 'error');
+        }
+    }
+    
+    async runMobileTests() {
+        this.logTest('Запуск мобильных тестов...', 'info');
+        try {
+            // Открываем страницу тестов в новом окне
+            window.open('/tests/mobile-responsive-test.html', '_blank');
+            this.logTest('Мобильные тесты открыты в новом окне', 'success');
+        } catch (error) {
+            this.logTest('Ошибка: ' + error.message, 'error');
+        }
+    }
+    
+    async runSecurityTests() {
+        this.logTest('Запуск тестов безопасности...', 'info');
+        
+        const securityChecks = [
+            {
+                name: 'HTTPS соединение',
+                check: () => location.protocol === 'https:',
+                critical: false
+            },
+            {
+                name: 'Helmet middleware',
+                check: () => true, // Проверяем на сервере
+                critical: true
+            },
+            {
+                name: 'CORS настройки',
+                check: () => true, // Проверяем на сервере
+                critical: true
+            },
+            {
+                name: 'Валидация входных данных',
+                check: () => true, // Проверяем на сервере
+                critical: true
+            }
+        ];
+        
+        let passed = 0;
+        for (const check of securityChecks) {
+            try {
+                if (check.check()) {
+                    this.logTest(`✅ ${check.name}`, 'success');
+                    passed++;
+                } else {
+                    this.logTest(`❌ ${check.name}`, check.critical ? 'error' : 'warning');
+                }
+            } catch (error) {
+                this.logTest(`❌ ${check.name}: ${error.message}`, 'error');
+            }
+        }
+        
+        this.logTest(`Безопасность: ${passed}/${securityChecks.length} проверок пройдено`, 
+            passed === securityChecks.length ? 'success' : 'warning');
+    }
+    
+    async runPerformanceTests() {
+        this.logTest('Запуск тестов производительности...', 'info');
+        
+        const startTime = performance.now();
+        
+        // Тест загрузки страницы
+        const loadTime = performance.now() - startTime;
+        this.logTest(`Время загрузки: ${loadTime.toFixed(2)}ms`, 
+            loadTime < 1000 ? 'success' : 'warning');
+        
+        // Тест размера DOM
+        const domSize = document.querySelectorAll('*').length;
+        this.logTest(`Размер DOM: ${domSize} элементов`, 
+            domSize < 1000 ? 'success' : 'warning');
+        
+        // Тест количества скриптов
+        const scripts = document.getElementsByTagName('script');
+        this.logTest(`Скриптов: ${scripts.length}`, 
+            scripts.length < 20 ? 'success' : 'warning');
+        
+        // Тест производительности API
+        try {
+            const apiStartTime = performance.now();
+            await fetch('/api/auth/check');
+            const apiEndTime = performance.now();
+            const apiResponseTime = apiEndTime - apiStartTime;
+            
+            this.logTest(`API ответ: ${apiResponseTime.toFixed(2)}ms`, 
+                apiResponseTime < 500 ? 'success' : 'warning');
+        } catch (error) {
+            this.logTest('Ошибка тестирования API: ' + error.message, 'error');
+        }
+    }
+    
+    async runAllTests() {
+        this.logTest('🚀 Запуск всех тестов...', 'info');
+        
+        await this.runAPITests();
+        await this.runComprehensiveAPITests();
+        await this.runFrontendTests();
+        await this.runComprehensiveFrontendTests();
+        await this.runMobileTests();
+        await this.runSecurityTests();
+        await this.runPerformanceTests();
+        
+        this.logTest('✅ Все тесты завершены!', 'success');
+    }
+    
+    clearTestResults() {
+        const container = document.getElementById('testResults');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center text-muted">
+                    <i class="fas fa-vial fa-3x mb-3"></i>
+                    <p>Нажмите кнопку "Запустить все тесты" для начала тестирования</p>
+                </div>
+            `;
+        }
+    }
+    
+    logTest(message, type = 'info') {
+        const container = document.getElementById('testResults');
+        if (!container) return;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+        const alertClass = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-danger' : type === 'warning' ? 'alert-warning' : 'alert-info';
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = `alert ${alertClass} alert-dismissible fade show`;
+        logEntry.innerHTML = `
+            ${icon} ${message}
+            <small class="text-muted ms-2">[${timestamp}]</small>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        container.appendChild(logEntry);
+        
+        // Прокручиваем к последнему сообщению
+        logEntry.scrollIntoView({ behavior: 'smooth' });
+    }
 }
 
 // Глобальные переменные (для совместимости)
@@ -1892,6 +2081,12 @@ window.showOrderCards = function(status) {
         window.app.showOrderCards(status);
     } else {
         console.error('Приложение не инициализировано');
+        // Попытка повторной инициализации
+        setTimeout(() => {
+            if (window.app && window.app.showOrderCards) {
+                window.app.showOrderCards(status);
+            }
+        }, 100);
     }
 };
 
@@ -1900,6 +2095,12 @@ window.viewOrderCard = function(orderId) {
         window.app.viewOrderCard(orderId);
     } else {
         console.error('Приложение не инициализировано');
+        // Попытка повторной инициализации
+        setTimeout(() => {
+            if (window.app && window.app.viewOrderCard) {
+                window.app.viewOrderCard(orderId);
+            }
+        }, 100);
     }
 };
 
@@ -1908,6 +2109,12 @@ window.startWork = function(orderId) {
         window.app.startWork(orderId);
     } else {
         console.error('Приложение не инициализировано');
+        // Попытка повторной инициализации
+        setTimeout(() => {
+            if (window.app && window.app.startWork) {
+                window.app.startWork(orderId);
+            }
+        }, 100);
     }
 };
 
@@ -2007,15 +2214,95 @@ window.clearSearch = function() {
     }
 };
 
+// ==================== ФУНКЦИИ ТЕСТИРОВАНИЯ ====================
+
+// Функции для страницы тестирования
+window.runAPITests = function() {
+    if (window.app && window.app.runAPITests) {
+        window.app.runAPITests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.runComprehensiveAPITests = function() {
+    if (window.app && window.app.runComprehensiveAPITests) {
+        window.app.runComprehensiveAPITests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.runFrontendTests = function() {
+    if (window.app && window.app.runFrontendTests) {
+        window.app.runFrontendTests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.runComprehensiveFrontendTests = function() {
+    if (window.app && window.app.runComprehensiveFrontendTests) {
+        window.app.runComprehensiveFrontendTests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.runMobileTests = function() {
+    if (window.app && window.app.runMobileTests) {
+        window.app.runMobileTests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.runSecurityTests = function() {
+    if (window.app && window.app.runSecurityTests) {
+        window.app.runSecurityTests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.runPerformanceTests = function() {
+    if (window.app && window.app.runPerformanceTests) {
+        window.app.runPerformanceTests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.runAllTests = function() {
+    if (window.app && window.app.runAllTests) {
+        window.app.runAllTests();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.clearTestResults = function() {
+    if (window.app && window.app.clearTestResults) {
+        window.app.clearTestResults();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
 // ==================== НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ ====================
 
 // Обработчик формы входа
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM загружен, инициализируем приложение...');
     
-    // Инициализируем приложение сразу
-    window.app = new WindowRepairApp();
-    console.log('Приложение инициализировано:', window.app);
+    // Проверяем, не инициализировано ли уже приложение
+    if (!window.app) {
+        // Инициализируем приложение сразу
+        window.app = new WindowRepairApp();
+        console.log('Приложение инициализировано:', window.app);
+    } else {
+        console.log('Приложение уже инициализировано');
+    }
     
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {

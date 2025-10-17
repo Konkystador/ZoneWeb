@@ -1250,31 +1250,32 @@ app.get('/api/estimate/:id/pdf', requireAuth, (req, res) => {
 app.get('/api/users/:id/hierarchy', requireAuth, (req, res) => {
   const userId = req.params.id;
   
-  // Получаем информацию о пользователе и его подчиненных
-  const query = `
-    WITH RECURSIVE user_hierarchy AS (
-      SELECT id, username, full_name, role, manager_id, 0 as level
-      FROM users 
-      WHERE id = ?
-      
-      UNION ALL
-      
-      SELECT u.id, u.username, u.full_name, u.role, u.manager_id, uh.level + 1
-      FROM users u
-      INNER JOIN user_hierarchy uh ON u.manager_id = uh.id
-    )
-    SELECT * FROM user_hierarchy ORDER BY level, full_name
-  `;
-  
-  db.all(query, [userId], (err, rows) => {
+  // Получаем информацию о пользователе
+  db.get('SELECT id, username, full_name, role, manager_id FROM users WHERE id = ?', [userId], (err, user) => {
     if (err) {
-      console.error('Ошибка получения иерархии:', err);
-      return res.status(500).json({ error: 'Ошибка получения иерархии' });
+      console.error('Ошибка получения пользователя:', err);
+      return res.status(500).json({ error: 'Ошибка получения пользователя' });
     }
     
-    // Строим дерево иерархии
-    const hierarchy = buildHierarchyTree(rows);
-    res.json(hierarchy);
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    // Получаем подчиненных пользователя
+    db.all('SELECT id, username, full_name, role, manager_id FROM users WHERE manager_id = ?', [userId], (err, subordinates) => {
+      if (err) {
+        console.error('Ошибка получения подчиненных:', err);
+        return res.status(500).json({ error: 'Ошибка получения подчиненных' });
+      }
+      
+      // Строим простую иерархию
+      const hierarchy = {
+        user: user,
+        subordinates: subordinates
+      };
+      
+      res.json(hierarchy);
+    });
   });
 });
 
