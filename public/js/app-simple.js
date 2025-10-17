@@ -237,6 +237,9 @@ async function showOrderCards(status = null) {
             
             // Обновляем активную кнопку
             updateActiveButton(status);
+            
+            // Показываем/скрываем кнопки управления
+            toggleManagementButtons(status);
         } else {
             console.error('Ошибка загрузки заказов:', response.status);
             showAlert('Ошибка загрузки заказов', 'danger');
@@ -301,9 +304,74 @@ function createOrderCardHtml(order) {
     const statusClass = getStatusColor(order.status);
     const statusText = getStatusText(order.status);
     
+    // Определяем, нужно ли показывать чекбокс и кнопки управления
+    const isDeclinedOrCancelled = order.status === 'declined' || order.status === 'cancelled';
+    
+    let checkboxHtml = '';
+    let actionButtonsHtml = '';
+    
+    if (isDeclinedOrCancelled) {
+        // Для отказов и корзины добавляем чекбокс
+        checkboxHtml = `
+            <div class="form-check position-absolute" style="top: 10px; right: 10px;">
+                <input class="form-check-input order-checkbox" type="checkbox" value="${order.id}" id="order_${order.id}">
+            </div>
+        `;
+        
+        // Кнопки для отказов и корзины
+        if (order.status === 'declined') {
+            actionButtonsHtml = `
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
+                        <i class="fas fa-eye"></i> Просмотр
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="restoreOrder(${order.id})" title="Восстановить заказ">
+                        <i class="fas fa-undo"></i> Восстановить
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${order.id})" title="Удалить навсегда">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            `;
+        } else if (order.status === 'cancelled') {
+            actionButtonsHtml = `
+                <div class="btn-group w-100" role="group">
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
+                        <i class="fas fa-eye"></i> Просмотр
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="restoreOrder(${order.id})" title="Восстановить заказ">
+                        <i class="fas fa-undo"></i> Восстановить
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteOrder(${order.id})" title="Удалить навсегда">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            `;
+        }
+    } else {
+        // Обычные кнопки для активных заказов
+        actionButtonsHtml = `
+            <div class="btn-group w-100" role="group">
+                <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
+                    <i class="fas fa-eye"></i> Просмотр
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="startWork(${order.id})" title="Начать работу">
+                    <i class="fas fa-play"></i> В работу
+                </button>
+                <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
+                    <i class="fas fa-ban"></i> Отказ
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
+                    <i class="fas fa-times"></i> Отмена
+                </button>
+            </div>
+        `;
+    }
+    
     return `
         <div class="col-md-6 col-lg-4 mb-3">
-            <div class="card order-card">
+            <div class="card order-card position-relative">
+                ${checkboxHtml}
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">${order.order_number}</h6>
                     <span class="badge ${statusClass}">${statusText}</span>
@@ -316,20 +384,7 @@ function createOrderCardHtml(order) {
                         <i class="fas fa-calendar"></i> ${order.visit_date ? new Date(order.visit_date).toLocaleString('ru-RU') : 'Не указано'}<br>
                         <i class="fas fa-user"></i> ${order.assigned_name || 'Не назначен'}
                     </p>
-                    <div class="btn-group w-100" role="group">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewOrderCard(${order.id})" title="Просмотр/редактирование">
-                            <i class="fas fa-eye"></i> Просмотр
-                        </button>
-                        <button class="btn btn-sm btn-outline-success" onclick="startWork(${order.id})" title="Начать работу">
-                            <i class="fas fa-play"></i> В работу
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning" onclick="declineOrder(${order.id})" title="Отказ клиента">
-                            <i class="fas fa-ban"></i> Отказ
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder(${order.id})" title="Отменить заказ">
-                            <i class="fas fa-times"></i> Отмена
-                        </button>
-                    </div>
+                    ${actionButtonsHtml}
                 </div>
             </div>
         </div>
@@ -929,6 +984,203 @@ function removeMeasurement(button) {
 
 function searchAddressOnMap() {
     showAlert('Карты временно отключены', 'info');
+}
+
+// ==================== УПРАВЛЕНИЕ ЗАКАЗАМИ (УДАЛЕНИЕ/ВОССТАНОВЛЕНИЕ) ====================
+
+// Показать/скрыть кнопки управления
+function toggleManagementButtons(status) {
+    const managementButtons = document.getElementById('managementButtons');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const restoreAllBtn = document.getElementById('restoreAllBtn');
+    
+    if (status === 'declined' || status === 'cancelled') {
+        managementButtons.style.display = 'block';
+        
+        // Обновляем текст кнопок в зависимости от статуса
+        if (status === 'declined') {
+            clearAllBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Удалить все отказы';
+            restoreAllBtn.innerHTML = '<i class="fas fa-undo"></i> Восстановить все отказы';
+        } else if (status === 'cancelled') {
+            clearAllBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Очистить корзину';
+            restoreAllBtn.innerHTML = '<i class="fas fa-undo"></i> Восстановить все из корзины';
+        }
+    } else {
+        managementButtons.style.display = 'none';
+    }
+}
+
+// Переключить выбор всех заказов
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
+    
+    orderCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+// Получить выбранные заказы
+function getSelectedOrders() {
+    const orderCheckboxes = document.querySelectorAll('.order-checkbox:checked');
+    return Array.from(orderCheckboxes).map(checkbox => parseInt(checkbox.value));
+}
+
+// Удалить заказ навсегда
+async function deleteOrder(orderId) {
+    if (!confirm('Вы уверены, что хотите удалить этот заказ навсегда? Это действие нельзя отменить.')) {
+        return;
+    }
+    
+    try {
+        console.log('Удаляем заказ:', orderId);
+        
+        const response = await fetch(`/api/orders/${orderId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showAlert('Заказ удален навсегда', 'success');
+            // Перезагружаем список заказов
+            const currentStatus = getCurrentStatus();
+            showOrderCards(currentStatus);
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Ошибка удаления заказа', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка удаления заказа:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Восстановить заказ
+async function restoreOrder(orderId) {
+    try {
+        console.log('Восстанавливаем заказ:', orderId);
+        
+        const response = await fetch(`/api/orders/${orderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: 'pending' })
+        });
+        
+        if (response.ok) {
+            showAlert('Заказ восстановлен', 'success');
+            // Перезагружаем список заказов
+            const currentStatus = getCurrentStatus();
+            showOrderCards(currentStatus);
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Ошибка восстановления заказа', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка восстановления заказа:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Очистить все заказы (удалить навсегда)
+async function clearAllOrders() {
+    const selectedOrders = getSelectedOrders();
+    
+    if (selectedOrders.length === 0) {
+        showAlert('Выберите заказы для удаления', 'warning');
+        return;
+    }
+    
+    if (!confirm(`Вы уверены, что хотите удалить ${selectedOrders.length} заказ(ов) навсегда? Это действие нельзя отменить.`)) {
+        return;
+    }
+    
+    try {
+        console.log('Удаляем заказы:', selectedOrders);
+        
+        // Удаляем заказы по одному
+        for (const orderId of selectedOrders) {
+            const response = await fetch(`/api/orders/${orderId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                showAlert(`Ошибка удаления заказа ${orderId}: ${error.error}`, 'danger');
+                return;
+            }
+        }
+        
+        showAlert(`${selectedOrders.length} заказ(ов) удалено навсегда`, 'success');
+        
+        // Перезагружаем список заказов
+        const currentStatus = getCurrentStatus();
+        showOrderCards(currentStatus);
+        
+    } catch (error) {
+        console.error('Ошибка массового удаления заказов:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Восстановить все заказы
+async function restoreAllOrders() {
+    const selectedOrders = getSelectedOrders();
+    
+    if (selectedOrders.length === 0) {
+        showAlert('Выберите заказы для восстановления', 'warning');
+        return;
+    }
+    
+    if (!confirm(`Вы уверены, что хотите восстановить ${selectedOrders.length} заказ(ов)?`)) {
+        return;
+    }
+    
+    try {
+        console.log('Восстанавливаем заказы:', selectedOrders);
+        
+        // Восстанавливаем заказы по одному
+        for (const orderId of selectedOrders) {
+            const response = await fetch(`/api/orders/${orderId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'pending' })
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                showAlert(`Ошибка восстановления заказа ${orderId}: ${error.error}`, 'danger');
+                return;
+            }
+        }
+        
+        showAlert(`${selectedOrders.length} заказ(ов) восстановлено`, 'success');
+        
+        // Перезагружаем список заказов
+        const currentStatus = getCurrentStatus();
+        showOrderCards(currentStatus);
+        
+    } catch (error) {
+        console.error('Ошибка массового восстановления заказов:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Получить текущий статус фильтрации
+function getCurrentStatus() {
+    const activeButton = document.querySelector('.btn-group .btn.active');
+    if (activeButton) {
+        const onclick = activeButton.getAttribute('onclick');
+        if (onclick) {
+            const match = onclick.match(/showOrderCards\('([^']+)'\)/);
+            if (match) {
+                return match[1];
+            }
+        }
+    }
+    return null; // По умолчанию
 }
 
 

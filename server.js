@@ -524,6 +524,43 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
   });
 });
 
+// Delete order (permanent deletion)
+app.delete('/api/orders/:id', requireAuth, (req, res) => {
+  const orderId = req.params.id;
+  
+  // Проверяем права доступа (только админ может удалять заказы)
+  if (req.session.userRole !== 'admin') {
+    return res.status(403).json({ error: 'Недостаточно прав для удаления заказов' });
+  }
+  
+  // Сначала удаляем связанные данные
+  db.run('DELETE FROM order_cards WHERE order_id = ?', [orderId], (err) => {
+    if (err) {
+      console.error('Ошибка удаления карточек заказа:', err);
+    }
+    
+    // Удаляем информацию о створках
+    db.run('DELETE FROM sash_info WHERE order_card_id IN (SELECT id FROM order_cards WHERE order_id = ?)', [orderId], (err) => {
+      if (err) {
+        console.error('Ошибка удаления информации о створках:', err);
+      }
+      
+      // Удаляем сам заказ
+      db.run('DELETE FROM orders WHERE id = ?', [orderId], function(err) {
+        if (err) {
+          return res.status(500).json({ error: 'Ошибка удаления заказа' });
+        }
+        
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Заказ не найден' });
+        }
+        
+        res.json({ success: true, message: 'Заказ удален навсегда' });
+      });
+    });
+  });
+});
+
 // Update user
 app.put('/api/users/:id', requireAuth, (req, res) => {
   const userId = req.params.id;
