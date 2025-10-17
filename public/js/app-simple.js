@@ -1709,6 +1709,60 @@ function getRoleText(role) {
     return roles[role] || role;
 }
 
+// Загрузка истории изменений заказа
+async function loadOrderHistory(orderId) {
+    try {
+        const response = await fetch(`/api/orders/${orderId}/history`);
+        if (response.ok) {
+            const history = await response.json();
+            displayOrderHistory(history);
+        } else {
+            document.getElementById('orderHistoryContent').innerHTML = 
+                '<p class="text-muted text-center">История изменений недоступна</p>';
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки истории изменений:', error);
+        document.getElementById('orderHistoryContent').innerHTML = 
+            '<p class="text-danger text-center">Ошибка загрузки истории</p>';
+    }
+}
+
+// Отображение истории изменений
+function displayOrderHistory(history) {
+    const historyContent = document.getElementById('orderHistoryContent');
+    
+    if (!history || history.length === 0) {
+        historyContent.innerHTML = '<p class="text-muted text-center">История изменений пуста</p>';
+        return;
+    }
+    
+    let historyHtml = '<div class="timeline">';
+    
+    history.forEach((entry, index) => {
+        const date = new Date(entry.created_at).toLocaleString('ru-RU');
+        const isLast = index === history.length - 1;
+        
+        historyHtml += `
+            <div class="timeline-item ${isLast ? 'timeline-item-last' : ''}">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${entry.action_text}</h6>
+                            <p class="mb-1 text-muted">${entry.user_name}</p>
+                            ${entry.changes ? `<small class="text-muted">${entry.changes}</small>` : ''}
+                        </div>
+                        <small class="text-muted">${date}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    historyHtml += '</div>';
+    historyContent.innerHTML = historyHtml;
+}
+
 // ==================== НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ ====================
 
 // Обработчик формы входа
@@ -1861,6 +1915,33 @@ function showOrderDetailsModal(order) {
                                 <p>${order.problem_description || 'Не указано'}</p>
                             </div>
                         </div>
+                        
+                        <!-- История изменений (спойлер) -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="accordion" id="orderHistoryAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="historyHeader">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#orderHistory" aria-expanded="false" aria-controls="orderHistory">
+                                                <i class="fas fa-history me-2"></i> История изменений
+                                            </button>
+                                        </h2>
+                                        <div id="orderHistory" class="accordion-collapse collapse" aria-labelledby="historyHeader" data-bs-parent="#orderHistoryAccordion">
+                                            <div class="accordion-body">
+                                                <div id="orderHistoryContent">
+                                                    <div class="text-center">
+                                                        <div class="spinner-border text-primary" role="status">
+                                                            <span class="visually-hidden">Загрузка...</span>
+                                                        </div>
+                                                        <p class="mt-2">Загрузка истории изменений...</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
@@ -1894,6 +1975,9 @@ function showOrderDetailsModal(order) {
     // Показываем модальное окно
     const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
     modal.show();
+    
+    // Загружаем историю изменений
+    loadOrderHistory(order.id);
     
     // Исправляем проблему с aria-hidden
     const modalElement = document.getElementById('orderDetailsModal');

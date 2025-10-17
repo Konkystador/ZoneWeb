@@ -4,13 +4,25 @@ body {
     background-color: #f8f9fa;
 }
 
+/* Зеленая цветовая схема */
+:root {
+    --primary-green: #2d5a27;
+    --secondary-green: #4a7c59;
+    --light-green: #6b8e6b;
+    --accent-green: #8fbc8f;
+    --success-green: #28a745;
+    --info-green: #17a2b8;
+    --warning-green: #ffc107;
+    --danger-green: #dc3545;
+}
+
 /* Экран входа */
 .login-container {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
 }
 
 .login-card {
@@ -20,6 +32,154 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 400px;
+}
+
+/* Навбар с зеленой схемой */
+.navbar {
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-brand {
+    color: white !important;
+    font-weight: bold;
+}
+
+.navbar-nav .nav-link {
+    color: white !important;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--accent-green) !important;
+}
+
+/* Кнопки с зеленой схемой */
+.btn-primary {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-green);
+    border-color: var(--secondary-green);
+}
+
+.btn-success {
+    background-color: var(--success-green);
+    border-color: var(--success-green);
+}
+
+.btn-outline-primary {
+    color: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+/* Карточки заказов */
+.order-card {
+    border-left: 4px solid var(--accent-green);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Статусы заказов */
+.badge.bg-primary {
+    background-color: var(--primary-green) !important;
+}
+
+.badge.bg-success {
+    background-color: var(--success-green) !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--warning-green) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--info-green) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--danger-green) !important;
+}
+
+/* Стили для истории изменений */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding-left: 20px;
+}
+
+.timeline-item:not(.timeline-item-last)::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 20px;
+    bottom: -20px;
+    width: 2px;
+    background-color: var(--accent-green);
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--primary-green);
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--accent-green);
+}
+
+.timeline-content {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-green);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-item-last .timeline-marker {
+    background-color: var(--success-green);
+}
+
+/* Бургер-меню */
+.navbar-nav .dropdown-menu {
+    min-width: 250px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.navbar-nav .dropdown-menu .dropdown-item {
+    padding: 8px 16px;
+    transition: background-color 0.2s ease;
+}
+
+.navbar-nav .dropdown-menu .dropdown-item:hover {
+    background-color: var(--accent-green);
+    color: white;
+}
+
+.navbar-nav .dropdown-menu .dropdown-header {
+    color: var(--primary-green);
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .login-header {

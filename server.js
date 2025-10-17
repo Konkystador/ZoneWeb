@@ -264,6 +264,19 @@ db.serialize(() => {
     FOREIGN KEY (user_id) REFERENCES users(id)
   )`);
 
+  // Order history table for tracking changes
+  db.run(`CREATE TABLE IF NOT EXISTS order_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    action_text TEXT NOT NULL,
+    changes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`);
+
   // Insert default admin user
   const adminPassword = bcrypt.hashSync('admin123', 10);
   db.run(`INSERT OR IGNORE INTO users (username, password, role, full_name) 
@@ -1317,6 +1330,36 @@ function buildHierarchyTree(rows) {
   
   return root;
 }
+
+// Get order history
+app.get('/api/orders/:id/history', requireAuth, (req, res) => {
+  const orderId = req.params.id;
+  
+  // Получаем историю изменений заказа
+  const query = `
+    SELECT 
+      oh.id,
+      oh.action,
+      oh.action_text,
+      oh.changes,
+      oh.created_at,
+      u.full_name as user_name,
+      u.username
+    FROM order_history oh
+    LEFT JOIN users u ON oh.user_id = u.id
+    WHERE oh.order_id = ?
+    ORDER BY oh.created_at DESC
+  `;
+  
+  db.all(query, [orderId], (err, rows) => {
+    if (err) {
+      console.error('Ошибка получения истории заказа:', err);
+      return res.status(500).json({ error: 'Ошибка получения истории заказа' });
+    }
+    
+    res.json(rows);
+  });
+});
 
 // Start server
 app.listen(PORT, () => {
