@@ -251,9 +251,24 @@ class WindowRepairApp {
 
     // ==================== МЕТОДЫ ДЛЯ ГЛОБАЛЬНЫХ ФУНКЦИЙ ====================
     
-    viewOrderCard(orderId) {
+    async viewOrderCard(orderId) {
         console.log('WindowRepairApp.viewOrderCard вызван, orderId:', orderId);
-        showOrderDetailsModal(this.orders.find(order => order.id == orderId));
+        
+        try {
+            // Загружаем заказ из API
+            const response = await fetch(`/api/orders/${orderId}`);
+            if (response.ok) {
+                const order = await response.json();
+                console.log('Заказ загружен из API:', order);
+                showOrderDetailsModal(order);
+            } else {
+                console.error('Ошибка загрузки заказа:', response.status);
+                showAlert('Ошибка загрузки заказа', 'danger');
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки заказа:', error);
+            showAlert('Ошибка соединения с сервером', 'danger');
+        }
     }
     
     startWork(orderId) {
@@ -2181,20 +2196,20 @@ window.showOrderCards = function(status) {
     }
 };
 
-window.viewOrderCard = function(orderId) {
+window.viewOrderCard = async function(orderId) {
     console.log('viewOrderCard вызвана, orderId:', orderId);
     console.log('window.app:', window.app);
     
     if (window.app && typeof window.app.viewOrderCard === 'function') {
         console.log('Вызываем app.viewOrderCard');
-        window.app.viewOrderCard(orderId);
+        await window.app.viewOrderCard(orderId);
     } else {
         console.error('Приложение не инициализировано или метод не найден');
         // Попытка повторной инициализации
-        setTimeout(() => {
+        setTimeout(async () => {
             if (window.app && typeof window.app.viewOrderCard === 'function') {
                 console.log('Повторная попытка - вызываем app.viewOrderCard');
-                window.app.viewOrderCard(orderId);
+                await window.app.viewOrderCard(orderId);
             } else {
                 console.error('Повторная попытка не удалась');
             }
