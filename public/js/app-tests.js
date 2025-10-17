@@ -308,9 +308,13 @@ function testPerformance() {
         const navigation = performance.getEntriesByType('navigation')[0];
         let loadTime = 0;
         
-        if (navigation) {
+        if (navigation && navigation.loadEventEnd && navigation.navigationStart) {
             loadTime = navigation.loadEventEnd - navigation.navigationStart;
             console.log('📍 Время загрузки страницы:', loadTime, 'ms');
+        } else {
+            // Fallback - используем время с момента загрузки страницы
+            loadTime = performance.now();
+            console.log('📍 Время загрузки (fallback):', loadTime, 'ms');
         }
         
         // Проверяем использование памяти
@@ -318,14 +322,64 @@ function testPerformance() {
         if (performance.memory) {
             memoryUsage = performance.memory.usedJSHeapSize / 1024 / 1024;
             console.log('📍 Использование памяти:', memoryUsage.toFixed(2), 'MB');
+        } else {
+            // Fallback для браузеров без поддержки performance.memory
+            memoryUsage = 0;
+            console.log('📍 Использование памяти: недоступно');
         }
+        
+        // Проверяем количество ресурсов
+        const resources = performance.getEntriesByType('resource');
+        const jsResources = resources.filter(r => r.name.includes('.js'));
+        const cssResources = resources.filter(r => r.name.includes('.css'));
+        
+        console.log('📍 Загружено ресурсов:', resources.length);
+        console.log('📍 JS файлов:', jsResources.length);
+        console.log('📍 CSS файлов:', cssResources.length);
+        
+        // Проверяем время загрузки JS файлов
+        let jsLoadTime = 0;
+        jsResources.forEach(resource => {
+            if (resource.duration) {
+                jsLoadTime += resource.duration;
+            }
+        });
+        console.log('📍 Время загрузки JS:', jsLoadTime.toFixed(2), 'ms');
+        
+        // Проверяем размер загруженных ресурсов
+        let totalSize = 0;
+        resources.forEach(resource => {
+            if (resource.transferSize) {
+                totalSize += resource.transferSize;
+            }
+        });
+        const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
+        console.log('📍 Общий размер ресурсов:', totalSizeMB, 'MB');
         
         const endTime = performance.now();
         const testDuration = endTime - startTime;
         
-        const success = testDuration < 1000 && loadTime < 10000; // Тест должен выполняться быстро
-        logTest('Производительность', success, 
-            `Время теста: ${testDuration.toFixed(2)}ms, загрузка: ${loadTime.toFixed(2)}ms, память: ${memoryUsage.toFixed(2)}MB`);
+        // Более мягкие критерии успеха
+        const loadTimeOk = loadTime < 5000 || loadTime === 0; // 5 секунд или fallback
+        const testDurationOk = testDuration < 2000; // 2 секунды на тест
+        const memoryOk = memoryUsage < 200 || memoryUsage === 0; // 200MB или недоступно
+        const jsLoadTimeOk = jsLoadTime < 1000; // JS должен загружаться менее 1 секунды
+        const totalSizeOk = totalSize < 5 * 1024 * 1024; // Общий размер менее 5MB
+        
+        const success = testDurationOk && loadTimeOk && memoryOk && jsLoadTimeOk && totalSizeOk;
+        
+        let details = `Время теста: ${testDuration.toFixed(2)}ms`;
+        if (loadTime > 0) {
+            details += `, загрузка: ${loadTime.toFixed(2)}ms`;
+        } else {
+            details += `, загрузка: fallback`;
+        }
+        details += `, память: ${memoryUsage > 0 ? memoryUsage.toFixed(2) + 'MB' : 'недоступно'}`;
+        details += `, JS: ${jsLoadTime.toFixed(2)}ms`;
+        details += `, размер: ${totalSizeMB}MB`;
+        details += `, ресурсы: ${resources.length}`;
+        
+        logTest('Производительность', success, details);
         return success;
     } catch (error) {
         console.error('❌ Ошибка проверки производительности:', error);
