@@ -438,9 +438,9 @@ async function runComprehensiveTests() {
             console.log(`\n🔄 Выполнение теста: ${test.name}`);
             
             // Обновляем прогресс
-            const progressElement = document.getElementById('testProgress');
-            if (progressElement) {
-                const progressBar = progressElement.querySelector('.progress-bar');
+            const progressElement2 = document.getElementById('testProgress');
+            if (progressElement2) {
+                const progressBar = progressElement2.querySelector('.progress-bar');
                 if (progressBar) {
                     const progress = Math.round(((i + 1) / tests.length) * 100);
                     progressBar.style.width = `${progress}%`;
@@ -480,9 +480,9 @@ async function runComprehensiveTests() {
     
     // Скрываем статус и прогресс после завершения
     const statusElement = document.getElementById('testStatus');
-    const progressElement = document.getElementById('testProgress');
+    const progressElement3 = document.getElementById('testProgress');
     if (statusElement) statusElement.style.display = 'none';
-    if (progressElement) progressElement.style.display = 'none';
+    if (progressElement3) progressElement3.style.display = 'none';
     
     return {
         passed: comprehensivePassedTests,
