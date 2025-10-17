@@ -112,6 +112,9 @@
             <button class="btn btn-secondary btn-test" onclick="clearResults()">
                 <i class="fas fa-trash"></i> Очистить результаты
             </button>
+            <button class="btn btn-warning btn-test" onclick="copyResults()">
+                <i class="fas fa-copy"></i> Копировать результаты
+            </button>
             <button class="btn btn-info btn-test" onclick="exportResults()">
                 <i class="fas fa-download"></i> Экспорт результатов
             </button>
@@ -185,6 +188,53 @@
             link.href = URL.createObjectURL(dataBlob);
             link.download = 'frontend-test-results.json';
             link.click();
+        }
+        
+        function copyResults() {
+            const results = window.FrontendTests ? window.FrontendTests.testResults : [];
+            const summary = document.getElementById('test-summary').textContent;
+            
+            let copyText = `📊 РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ\n`;
+            copyText += `Время: ${new Date().toLocaleString('ru-RU')}\n`;
+            copyText += `URL: ${window.location.href}\n\n`;
+            copyText += `${summary}\n\n`;
+            copyText += `ДЕТАЛЬНЫЕ РЕЗУЛЬТАТЫ:\n`;
+            copyText += `================================\n\n`;
+            
+            results.forEach((result, index) => {
+                const status = result.passed ? '✅' : '❌';
+                const time = new Date(result.timestamp).toLocaleTimeString('ru-RU');
+                copyText += `${index + 1}. ${status} ${result.name}\n`;
+                copyText += `   Время: ${time}\n`;
+                copyText += `   Сообщение: ${result.message}\n\n`;
+            });
+            
+            copyText += `\n================================\n`;
+            copyText += `Сгенерировано автоматически системой тестирования`;
+            
+            navigator.clipboard.writeText(copyText).then(() => {
+                showAlert('Результаты скопированы в буфер обмена!', 'success');
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+                showAlert('Ошибка копирования. Попробуйте экспорт.', 'danger');
+            });
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
         }
         
         // Автозапуск тестов при загрузке страницы

@@ -2617,6 +2617,21 @@ function showOrderDetailsModal(order) {
     
     // Показываем модальное окно
     const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+    
+    // Обработчик показа модального окна
+    modal._element.addEventListener('shown.bs.modal', function() {
+        // Убираем aria-hidden после показа
+        this.removeAttribute('aria-hidden');
+    }, { once: true });
+    
+    // Обработчик скрытия модального окна
+    modal._element.addEventListener('hidden.bs.modal', function() {
+        // Удаляем модальное окно из DOM для предотвращения aria-hidden ошибок
+        this.remove();
+        // Восстанавливаем модальное окно в DOM
+        document.body.appendChild(this);
+    }, { once: true });
+    
     modal.show();
     
     // Загружаем историю изменений
