@@ -452,13 +452,30 @@ function editOrder(orderId) {
         modal.hide();
     }
     
-    // Переходим на страницу работы с заказом
-    currentWorkOrderId = orderId;
-    showPage('work');
-    loadOrderForEdit(orderId);
+    // Загружаем данные заказа и открываем модальное окно редактирования
+    loadOrderForEditModal(orderId);
 }
 
-// Загрузка данных заказа для редактирования
+// Загрузка данных заказа для редактирования в модальном окне
+async function loadOrderForEditModal(orderId) {
+    try {
+        const response = await fetch(`/api/orders/${orderId}`);
+        if (response.ok) {
+            const order = await response.json();
+            populateEditModalForm(order);
+            // Открываем модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('editOrderModal'));
+            modal.show();
+        } else {
+            showAlert('Ошибка загрузки данных заказа', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки заказа для редактирования:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Загрузка данных заказа для редактирования (для страницы работы)
 async function loadOrderForEdit(orderId) {
     try {
         const response = await fetch(`/api/orders/${orderId}`);
@@ -474,7 +491,32 @@ async function loadOrderForEdit(orderId) {
     }
 }
 
-// Заполнение формы редактирования
+// Заполнение формы редактирования в модальном окне
+function populateEditModalForm(order) {
+    document.getElementById('editModalClientName').value = order.client_name || '';
+    document.getElementById('editModalClientPhone').value = order.client_phone || '';
+    document.getElementById('editModalClientTelegram').value = order.client_telegram || '';
+    document.getElementById('editModalCity').value = order.city || '';
+    document.getElementById('editModalStreet').value = order.street || '';
+    document.getElementById('editModalHouse').value = order.house || '';
+    document.getElementById('editModalApartment').value = order.apartment || '';
+    document.getElementById('editModalEntrance').value = order.entrance || '';
+    document.getElementById('editModalFloor').value = order.floor || '';
+    document.getElementById('editModalIntercom').value = order.intercom || '';
+    document.getElementById('editModalProblemDescription').value = order.problem_description || '';
+    
+    // Форматируем дату для input datetime-local
+    if (order.visit_date) {
+        const visitDate = new Date(order.visit_date);
+        const formattedDate = visitDate.toISOString().slice(0, 16);
+        document.getElementById('editModalVisitDate').value = formattedDate;
+    }
+    
+    // Сохраняем ID заказа для сохранения
+    window.currentEditOrderId = order.id;
+}
+
+// Заполнение формы редактирования (для страницы работы)
 function populateEditForm(order) {
     document.getElementById('editClientName').value = order.client_name || '';
     document.getElementById('editClientPhone').value = order.client_phone || '';
@@ -496,7 +538,61 @@ function populateEditForm(order) {
     }
 }
 
-// Сохранение изменений заказа
+// Сохранение изменений заказа из модального окна
+async function saveOrderChangesModal() {
+    if (!window.currentEditOrderId) {
+        showAlert('Нет активного заказа для сохранения', 'warning');
+        return;
+    }
+    
+    const formData = {
+        client_name: document.getElementById('editModalClientName').value,
+        client_phone: document.getElementById('editModalClientPhone').value,
+        client_telegram: document.getElementById('editModalClientTelegram').value,
+        city: document.getElementById('editModalCity').value,
+        street: document.getElementById('editModalStreet').value,
+        house: document.getElementById('editModalHouse').value,
+        apartment: document.getElementById('editModalApartment').value,
+        entrance: document.getElementById('editModalEntrance').value,
+        floor: document.getElementById('editModalFloor').value,
+        intercom: document.getElementById('editModalIntercom').value,
+        problem_description: document.getElementById('editModalProblemDescription').value,
+        visit_date: document.getElementById('editModalVisitDate').value
+    };
+    
+    // Валидация
+    if (!formData.client_name || !formData.client_phone) {
+        showAlert('Заполните обязательные поля (имя и телефон)', 'warning');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/orders/${window.currentEditOrderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            showAlert('Изменения сохранены успешно!', 'success');
+            // Закрываем модальное окно
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editOrderModal'));
+            modal.hide();
+            // Обновляем список заказов
+            loadOrders();
+        } else {
+            const error = await response.json();
+            showAlert(error.error || 'Ошибка сохранения изменений', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка сохранения заказа:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Сохранение изменений заказа (для страницы работы)
 async function saveOrderChanges() {
     if (!currentWorkOrderId) {
         showAlert('Нет активного заказа для сохранения', 'warning');
@@ -809,6 +905,13 @@ async function loadDashboard() {
             document.getElementById('completedCount').textContent = stats.completed;
             
             console.log('Статистика дашборда обновлена:', stats);
+            
+            // Показываем только активные заказы (предстоящие и в работе) на дашборде
+            const activeOrders = orders.filter(order => 
+                order.status === 'pending' || order.status === 'in_progress'
+            );
+            console.log('Активные заказы для дашборда:', activeOrders);
+            renderOrderCards(activeOrders);
         } else {
             console.error('Ошибка загрузки заказов для дашборда');
         }
@@ -1761,7 +1864,7 @@ function showOrderDetailsModal(order) {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-                        <button type="button" class="btn btn-primary" onclick="editOrder(${order.id})">
+                        <button type="button" class="btn btn-primary" onclick="editOrder(${order.id})" data-bs-dismiss="modal">
                             <i class="fas fa-edit"></i> Редактировать
                         </button>
                         <button type="button" class="btn btn-success" onclick="startWork(${order.id})" data-bs-dismiss="modal">
