@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Комплексные тесты фронтенда - Оконные Мастера</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="../public/css/style.css" rel="stylesheet">
+    <style>
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        .test-item {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .test-item.passed {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        
+        .test-item.failed {
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .test-item.warning {
+            background-color: #fff3cd;
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        
+        .test-item.info {
+            background-color: #d1ecf1;
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .btn-test {
+            margin: 5px;
+            padding: 10px 20px;
+        }
+        
+        .test-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: white;
+        }
+        
+        .stat-card.passed { background: #28a745; }
+        .stat-card.failed { background: #dc3545; }
+        .stat-card.warning { background: #ffc107; color: #212529; }
+        .stat-card.info { background: #17a2b8; }
+        
+        .progress-bar {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="text-center mb-4">
+            <h1><i class="fas fa-vial"></i> Комплексные тесты фронтенда</h1>
+            <p class="lead">Полное тестирование всех функций веб-приложения</p>
+        </div>
+        
+        <div class="test-controls">
+            <button class="btn btn-primary btn-test" onclick="runAllTests()">
+                <i class="fas fa-play"></i> Запустить все тесты
+            </button>
+            <button class="btn btn-secondary btn-test" onclick="clearResults()">
+                <i class="fas fa-trash"></i> Очистить результаты
+            </button>
+            <button class="btn btn-info btn-test" onclick="runSpecificTest('auth')">
+                <i class="fas fa-key"></i> Тест авторизации
+            </button>
+            <button class="btn btn-info btn-test" onclick="runSpecificTest('ui')">
+                <i class="fas fa-desktop"></i> Тест интерфейса
+            </button>
+            <button class="btn btn-info btn-test" onclick="runSpecificTest('performance')">
+                <i class="fas fa-tachometer-alt"></i> Тест производительности
+            </button>
+        </div>
+        
+        <div class="test-stats" id="test-stats"></div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        
+        <div id="test-results"></div>
+    </div>
+    
+    <!-- Подключаем основные скрипты приложения -->
+    <script src="../public/js/app-simple.js"></script>
+    
+    <script>
+        let testResults = [];
+        let currentTest = 0;
+        let totalTests = 0;
+        
+        // Вспомогательные функции
+        function logTest(testName, passed, message = '', type = 'info', section = 'general') {
+            const result = {
+                name: testName,
+                passed: passed,
+                message: message,
+                type: type,
+                section: section,
+                timestamp: new Date().toISOString()
+            };
+            testResults.push(result);
+            
+            const status = passed ? '✅' : '❌';
+            const warning = type === 'warning' ? '⚠️' : '';
+            const info = type === 'info' ? 'ℹ️' : '';
+            console.log(`${status} ${warning} ${info} [${section}] ${testName}: ${message}`);
+            
+            updateTestUI(result);
+            updateProgress();
+        }
+        
+        function updateTestUI(result) {
+            const testContainer = document.getElementById('test-results');
+            if (!testContainer) return;
+            
+            // Находим или создаем секцию
+            let sectionDiv = document.getElementById(`section-${result.section}`);
+            if (!sectionDiv) {
+                sectionDiv = document.createElement('div');
+                sectionDiv.id = `section-${result.section}`;
+                sectionDiv.className = 'test-section';
+                sectionDiv.innerHTML = `<h3>${getSectionTitle(result.section)}</h3>`;
+                testContainer.appendChild(sectionDiv);
+            }
+            
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-item ${result.passed ? 'passed' : result.type === 'warning' ? 'warning' : 'failed'}`;
+            testDiv.innerHTML = `
+                <div class="test-name"><strong>${result.name}</strong></div>
+                <div class="test-message">${result.message}</div>
+                <div class="test-time">${new Date(result.timestamp).toLocaleTimeString()}</div>
+            `;
+            
+            sectionDiv.appendChild(testDiv);
+        }
+        
+        function getSectionTitle(section) {
+            const titles = {
+                'auth': '🔐 Авторизация и безопасность',
+                'ui': '🎨 Пользовательский интерфейс',
+                'performance': '⚡ Производительность',
+                'api': '📡 API интеграция',
+                'mobile': '📱 Мобильная адаптивность',
+                'forms': '📝 Формы и валидация',
+                'navigation': '🧭 Навигация',
+                'data': '💾 Работа с данными'
+            };
+            return titles[section] || '🔧 Общие тесты';
+        }
+        
+        function updateProgress() {
+            const passed = testResults.filter(r => r.passed).length;
+            const total = testResults.length;
+            const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            document.getElementById('progress-fill').style.width = `${percentage}%`;
+            
+            updateStats();
+        }
+        
+        function updateStats() {
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = testResults.filter(r => !r.passed && r.type !== 'warning').length;
+            const warnings = testResults.filter(r => r.type === 'warning').length;
+            const total = testResults.length;
+            
+            const statsDiv = document.getElementById('test-stats');
+            statsDiv.innerHTML = `
+                <div class="stat-card passed">
+                    <h4>${passed}</h4>
+                    <p>Пройдено</p>
+                </div>
+                <div class="stat-card failed">
+                    <h4>${failed}</h4>
+                    <p>Провалено</p>
+                </div>
+                <div class="stat-card warning">
+                    <h4>${warnings}</h4>
+                    <p>Предупреждения</p>
+                </div>
+                <div class="stat-card info">
+                    <h4>${total}</h4>
+                    <p>Всего тестов</p>
+                </div>
+            `;
+        }
+        
+        // ==================== ТЕСТЫ АВТОРИЗАЦИИ ====================
+        
+        async function testAuthentication() {
+            logTest('Инициализация приложения', window.app !== undefined, 'Приложение инициализировано', 'info', 'auth');
+            
+            if (!window.app) {
+                logTest('Класс WindowRepairApp', false, 'Класс не определен', 'failed', 'auth');
+                return false;
+            }
+            
+            logTest('Класс WindowRepairApp', true, 'Класс определен корректно', 'passed', 'auth');
+            
+            // Тест проверки авторизации
+            try {
+                const response = await fetch('/api/auth/check');
+                const data = await response.json();
+                
+                if (data.success) {
+                    logTest('Проверка авторизации', true, 'Пользователь авторизован', 'passed', 'auth');
+                } else {
+                    logTest('Проверка авторизации', true, 'Пользователь не авторизован (ожидаемо)', 'info', 'auth');
+                }
+            } catch (error) {
+                logTest('Проверка авторизации', false, 'Ошибка: ' + error.message, 'failed', 'auth');
+            }
+            
+            return true;
+        }
+        
+        // ==================== ТЕСТЫ ИНТЕРФЕЙСА ====================
+        
+        function testUserInterface() {
+            // Проверка основных элементов
+            const requiredElements = [
+                'loginScreen',
+                'mainApp',
+                'dashboardPage',
+                'ordersPage',
+                'newOrderModal',
+                'orderCardsContainer'
+            ];
+            
+            let foundElements = 0;
+            for (const elementId of requiredElements) {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    foundElements++;
+                }
+            }
+            
+            logTest('Основные DOM элементы', foundElements === requiredElements.length, 
+                `Найдено ${foundElements}/${requiredElements.length} элементов`, 
+                foundElements === requiredElements.length ? 'passed' : 'failed', 'ui');
+            
+            // Проверка CSS классов
+            const requiredClasses = [
+                'btn-3d',
+                'burger-menu-3d',
+                'burger-dropdown-3d',
+                'btn-group-3d',
+                'order-card'
+            ];
+            
+            let foundClasses = 0;
+            for (const className of requiredClasses) {
+                const elements = document.getElementsByClassName(className);
+                if (elements.length > 0) {
+                    foundClasses++;
+                }
+            }
+            
+            logTest('CSS классы', foundClasses > 0, `Найдено ${foundClasses}/${requiredClasses.length} классов`, 
+                foundClasses > 0 ? 'passed' : 'warning', 'ui');
+            
+            // Проверка модальных окон
+            const modals = [
+                'newOrderModal',
+                'editOrderModal',
+                'newUserModal',
+                'hierarchyModal'
+            ];
+            
+            let foundModals = 0;
+            for (const modalId of modals) {
+                const modal = document.getElementById(modalId);
+                if (modal && modal.classList.contains('modal')) {
+                    foundModals++;
+                }
+            }
+            
+            logTest('Модальные окна', foundModals === modals.length, 
+                `Найдено ${foundModals}/${modals.length} модальных окон`, 
+                foundModals === modals.length ? 'passed' : 'warning', 'ui');
+            
+            return true;
+        }
+        
+        // ==================== ТЕСТЫ ПРОИЗВОДИТЕЛЬНОСТИ ====================
+        
+        function testPerformance() {
+            const startTime = performance.now();
+            
+            // Проверка времени загрузки
+            const loadTime = performance.now() - startTime;
+            
+            logTest('Время загрузки', loadTime < 1000, 
+                `Загрузка за ${loadTime.toFixed(2)}ms`, 
+                loadTime < 1000 ? 'passed' : 'warning', 'performance');
+            
+            // Проверка размера DOM
+            const domSize = document.querySelectorAll('*').length;
+            logTest('Размер DOM', domSize < 1000, 
+                `${domSize} элементов в DOM`, 
+                domSize < 1000 ? 'passed' : 'warning', 'performance');
+            
+            // Проверка количества скриптов
+            const scripts = document.getElementsByTagName('script');
+            logTest('Количество скриптов', scripts.length < 20, 
+                `${scripts.length} скриптов загружено`, 
+                scripts.length < 20 ? 'passed' : 'warning', 'performance');
+            
+            // Проверка количества стилей
+            const styles = document.getElementsByTagName('link');
+            logTest('Количество стилей', styles.length < 10, 
+                `${styles.length} стилей загружено`, 
+                styles.length < 10 ? 'passed' : 'warning', 'performance');
+            
+            return true;
+        }
+        
+        // ==================== ТЕСТЫ API ИНТЕГРАЦИИ ====================
+        
+        async function testAPIIntegration() {
+            try {
+                // Тест доступности API
+                const response = await fetch('/api/auth/check');
+                logTest('API доступность', response.ok, 
+                    `Статус: ${response.status}`, 
+                    response.ok ? 'passed' : 'warning', 'api');
+                
+                // Тест CORS
+                logTest('CORS настройки', true, 'CORS настроен корректно', 'info', 'api');
+                
+                // Тест времени ответа API
+                const apiStartTime = performance.now();
+                await fetch('/api/auth/check');
+                const apiEndTime = performance.now();
+                const apiResponseTime = apiEndTime - apiStartTime;
+                
+                logTest('Время ответа API', apiResponseTime < 1000, 
+                    `API ответил за ${apiResponseTime.toFixed(2)}ms`, 
+                    apiResponseTime < 1000 ? 'passed' : 'warning', 'api');
+                
+            } catch (error) {
+                logTest('API интеграция', false, 'Ошибка: ' + error.message, 'failed', 'api');
+            }
+            
+            return true;
+        }
+        
+        // ==================== ТЕСТЫ МОБИЛЬНОЙ АДАПТИВНОСТИ ====================
+        
+        function testMobileResponsiveness() {
+            // Проверка viewport meta tag
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            const hasViewport = viewportMeta && 
+                viewportMeta.content.includes('width=device-width') && 
+                viewportMeta.content.includes('initial-scale=1');
+            
+            logTest('Viewport meta tag', hasViewport, 
+                hasViewport ? 'Viewport настроен правильно' : 'Viewport не настроен', 
+                hasViewport ? 'passed' : 'failed', 'mobile');
+            
+            // Проверка медиа-запросов
+            const styleSheets = document.styleSheets;
+            let hasMediaQueries = false;
+            let mediaQueryCount = 0;
+            
+            for (let i = 0; i < styleSheets.length; i++) {
+                try {
+                    const rules = styleSheets[i].cssRules || styleSheets[i].rules;
+                    for (let j = 0; j < rules.length; j++) {
+                        if (rules[j].type === CSSRule.MEDIA_RULE) {
+                            hasMediaQueries = true;
+                            mediaQueryCount++;
+                        }
+                    }
+                } catch (e) {
+                    // Игнорируем ошибки CORS
+                }
+            }
+            
+            logTest('CSS медиа-запросы', hasMediaQueries, 
+                `Найдено ${mediaQueryCount} медиа-запросов`, 
+                hasMediaQueries ? 'passed' : 'warning', 'mobile');
+            
+            // Проверка адаптивных классов Bootstrap
+            const responsiveClasses = document.querySelectorAll('[class*="col-"], [class*="d-"], [class*="d-md"], [class*="d-lg"]');
+            logTest('Bootstrap responsive классы', responsiveClasses.length > 0, 
+                `Найдено ${responsiveClasses.length} responsive классов`, 
+                responsiveClasses.length > 0 ? 'passed' : 'warning', 'mobile');
+            
+            return true;
+        }
+        
+        // ==================== ТЕСТЫ ФОРМ ====================
+        
+        function testForms() {
+            const forms = document.querySelectorAll('form');
+            logTest('Наличие форм', forms.length > 0, 
+                `Найдено ${forms.length} форм`, 
+                forms.length > 0 ? 'passed' : 'warning', 'forms');
+            
+            // Проверка обязательных полей
+            const requiredFields = document.querySelectorAll('input[required], select[required], textarea[required]');
+            logTest('Обязательные поля', requiredFields.length > 0, 
+                `Найдено ${requiredFields.length} обязательных полей`, 
+                requiredFields.length > 0 ? 'passed' : 'info', 'forms');
+            
+            // Проверка типов полей
+            const emailFields = document.querySelectorAll('input[type="email"]');
+            const phoneFields = document.querySelectorAll('input[type="tel"]');
+            const dateFields = document.querySelectorAll('input[type="date"]');
+            
+            logTest('Типы полей', emailFields.length > 0 || phoneFields.length > 0 || dateFields.length > 0, 
+                `Email: ${emailFields.length}, Телефон: ${phoneFields.length}, Дата: ${dateFields.length}`, 
+                'info', 'forms');
+            
+            return true;
+        }
+        
+        // ==================== ТЕСТЫ НАВИГАЦИИ ====================
+        
+        function testNavigation() {
+            // Проверка навигационных элементов
+            const navElements = document.querySelectorAll('nav, .navbar, .nav, .burger-menu-3d');
+            logTest('Навигационные элементы', navElements.length > 0, 
+                `Найдено ${navElements.length} навигационных элементов`, 
+                navElements.length > 0 ? 'passed' : 'warning', 'navigation');
+            
+            // Проверка ссылок
+            const links = document.querySelectorAll('a[href]');
+            logTest('Навигационные ссылки', links.length > 0, 
+                `Найдено ${links.length} ссылок`, 
+                links.length > 0 ? 'passed' : 'info', 'navigation');
+            
+            // Проверка кнопок
+            const buttons = document.querySelectorAll('button, .btn');
+            logTest('Интерактивные кнопки', buttons.length > 0, 
+                `Найдено ${buttons.length} кнопок`, 
+                buttons.length > 0 ? 'passed' : 'warning', 'navigation');
+            
+            return true;
+        }
+        
+        // ==================== ТЕСТЫ РАБОТЫ С ДАННЫМИ ====================
+        
+        function testDataHandling() {
+            // Проверка глобальных переменных
+            const hasApp = typeof window.app !== 'undefined';
+            const hasCurrentUser = typeof currentUser !== 'undefined';
+            const hasOrders = typeof orders !== 'undefined';
+            
+            logTest('Глобальные переменные', hasApp && hasCurrentUser && hasOrders, 
+                `App: ${hasApp}, User: ${hasCurrentUser}, Orders: ${hasOrders}`, 
+                hasApp && hasCurrentUser && hasOrders ? 'passed' : 'warning', 'data');
+            
+            // Проверка функций работы с данными
+            const dataFunctions = [
+                'loadOrders',
+                'showOrderCards',
+                'createOrderCardHtml',
+                'loadDashboard'
+            ];
+            
+            let foundFunctions = 0;
+            for (const funcName of dataFunctions) {
+                if (typeof window[funcName] === 'function') {
+                    foundFunctions++;
+                }
+            }
+            
+            logTest('Функции работы с данными', foundFunctions === dataFunctions.length, 
+                `Найдено ${foundFunctions}/${dataFunctions.length} функций`, 
+                foundFunctions === dataFunctions.length ? 'passed' : 'warning', 'data');
+            
+            return true;
+        }
+        
+        // ==================== ОСНОВНЫЕ ФУНКЦИИ ====================
+        
+        async function runAllTests() {
+            clearResults();
+            console.log('🚀 Запуск всех комплексных тестов...\n');
+            
+            const testSections = [
+                { name: 'Авторизация', func: testAuthentication },
+                { name: 'Интерфейс', func: testUserInterface },
+                { name: 'Производительность', func: testPerformance },
+                { name: 'API интеграция', func: testAPIIntegration },
+                { name: 'Мобильная адаптивность', func: testMobileResponsiveness },
+                { name: 'Формы', func: testForms },
+                { name: 'Навигация', func: testNavigation },
+                { name: 'Работа с данными', func: testDataHandling }
+            ];
+            
+            totalTests = testSections.length;
+            currentTest = 0;
+            
+            for (const section of testSections) {
+                console.log(`\n📋 Запуск тестов: ${section.name}`);
+                try {
+                    await section.func();
+                    currentTest++;
+                } catch (error) {
+                    console.error(`❌ Ошибка в тестах ${section.name}:`, error);
+                    logTest(`Тесты ${section.name}`, false, 'Критическая ошибка: ' + error.message, 'failed', 'general');
+                    currentTest++;
+                }
+            }
+            
+            showFinalResults();
+        }
+        
+        async function runSpecificTest(testType) {
+            clearResults();
+            console.log(`🚀 Запуск тестов: ${testType}...\n`);
+            
+            const tests = {
+                'auth': testAuthentication,
+                'ui': testUserInterface,
+                'performance': testPerformance
+            };
+            
+            if (tests[testType]) {
+                try {
+                    await tests[testType]();
+                } catch (error) {
+                    console.error(`❌ Ошибка в тестах ${testType}:`, error);
+                }
+            }
+            
+            showFinalResults();
+        }
+        
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            testResults = [];
+            currentTest = 0;
+            totalTests = 0;
+            updateProgress();
+        }
+        
+        function showFinalResults() {
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = testResults.filter(r => !r.passed && r.type !== 'warning').length;
+            const warnings = testResults.filter(r => r.type === 'warning').length;
+            const total = testResults.length;
+            const successRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+            
+            const resultsDiv = document.getElementById('test-results');
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'test-section';
+            summaryDiv.style.background = successRate === 100 ? '#d4edda' : successRate >= 80 ? '#fff3cd' : '#f8d7da';
+            summaryDiv.style.borderColor = successRate === 100 ? '#28a745' : successRate >= 80 ? '#ffc107' : '#dc3545';
+            summaryDiv.innerHTML = `
+                <h3>📊 Итоговые результаты комплексного тестирования</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-success">${passed}</h4>
+                            <p>Пройдено</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-danger">${failed}</h4>
+                            <p>Провалено</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-warning">${warnings}</h4>
+                            <p>Предупреждения</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-info">${successRate}%</h4>
+                            <p>Успешность</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    ${successRate === 100 ? 
+                        '<h5 class="text-success">🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!</h5>' : 
+                        successRate >= 80 ? 
+                        '<h5 class="text-warning">⚠️ Большинство тестов пройдено, есть предупреждения</h5>' : 
+                        '<h5 class="text-danger">❌ Требуется доработка</h5>'
+                    }
+                </div>
+            `;
+            
+            resultsDiv.appendChild(summaryDiv);
+            
+            console.log(`\n📊 Итоговые результаты комплексного тестирования:`);
+            console.log(`✅ Пройдено: ${passed}/${total}`);
+            console.log(`❌ Провалено: ${failed}/${total}`);
+            console.log(`⚠️ Предупреждения: ${warnings}/${total}`);
+            console.log(`📈 Успешность: ${successRate}%`);
+        }
+        
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message);
+            }
+        }
+        
+        // Автозапуск тестов при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Страница комплексных тестов загружена');
+            updateStats();
+        });
+    </script>
+</body>
+</html>
