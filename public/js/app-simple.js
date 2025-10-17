@@ -1982,6 +1982,9 @@ function showOrderDetailsModal(order) {
     // Исправляем проблему с aria-hidden
     const modalElement = document.getElementById('orderDetailsModal');
     modalElement.addEventListener('hidden.bs.modal', function() {
+        // Убираем aria-hidden и восстанавливаем нормальное состояние
+        modalElement.removeAttribute('aria-hidden');
+        modalElement.style.display = 'none';
         modalElement.remove();
     }, { once: true });
 }

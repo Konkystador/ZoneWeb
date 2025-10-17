@@ -521,6 +521,10 @@ app.post('/api/orders', requireAuth, (req, res) => {
         if (err) {
           return res.status(500).json({ error: 'Ошибка создания заказа' });
         }
+        
+        // Логируем создание заказа
+        logOrderHistory(this.lastID, req.session.userId, 'created', 'Заказ создан', `Номер: ${orderNumber}, Клиент: ${client_name}`);
+        
         res.json({ id: this.lastID, order_number: orderNumber });
       });
     });
@@ -570,6 +574,17 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
         return res.status(404).json({ error: 'Заказ не найден' });
       }
       
+      // Логируем изменение статуса
+      const statusTexts = {
+        'pending': 'Ожидает',
+        'in_progress': 'В работе',
+        'estimate_sent': 'Смета отправлена',
+        'completed': 'Завершен',
+        'cancelled': 'Отменен',
+        'declined': 'Отказ клиента'
+      };
+      logOrderHistory(orderId, req.session.userId, 'status_changed', `Статус изменен на: ${statusTexts[status] || status}`);
+      
       res.json({ success: true, message: 'Статус заказа обновлен' });
     });
   } else {
@@ -606,6 +621,9 @@ app.put('/api/orders/:id', requireAuth, (req, res) => {
       if (this.changes === 0) {
         return res.status(404).json({ error: 'Заказ не найден' });
       }
+      
+      // Логируем обновление данных заказа
+      logOrderHistory(orderId, req.session.userId, 'updated', 'Данные заказа обновлены', `Клиент: ${client_name}, Телефон: ${client_phone}`);
       
       res.json({ success: true, message: 'Заказ обновлен' });
     });
@@ -1360,6 +1378,16 @@ app.get('/api/orders/:id/history', requireAuth, (req, res) => {
     res.json(rows);
   });
 });
+
+// Helper function to log order history
+function logOrderHistory(orderId, userId, action, actionText, changes = null) {
+  const query = `INSERT INTO order_history (order_id, user_id, action, action_text, changes, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`;
+  db.run(query, [orderId, userId, action, actionText, changes], (err) => {
+    if (err) {
+      console.error('Ошибка записи в историю заказа:', err);
+    }
+  });
+}
 
 // Start server
 app.listen(PORT, () => {
