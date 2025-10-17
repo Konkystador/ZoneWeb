@@ -2517,8 +2517,14 @@ function applyFilters() {
 }
 
 function showOrderDetailsModal(order) {
+    // Убираем фокус с активного элемента перед показом модального окна
+    const activeElement = document.activeElement;
+    if (activeElement) {
+        activeElement.blur();
+    }
+    
     const modalHtml = `
-        <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+        <div class="modal fade modal-3d" id="orderDetailsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">

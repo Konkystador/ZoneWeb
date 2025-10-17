@@ -42,13 +42,41 @@ function updateTestUI(result) {
 // Тест 1: Проверка инициализации приложения
 function testAppInitialization() {
     try {
-        assert(window.app !== undefined, 'Приложение должно быть инициализировано');
-        assert(typeof window.app === 'object', 'app должен быть объектом');
-        assert(typeof window.app.checkAuth === 'function', 'checkAuth должен быть функцией');
+        console.log('🔍 Проверка инициализации приложения...');
+        console.log('window.app:', window.app);
+        console.log('typeof window.app:', typeof window.app);
         
-        logTest('Инициализация приложения', true, 'Приложение успешно инициализировано');
+        assert(window.app !== undefined, 'Приложение должно быть инициализировано');
+        console.log('✅ window.app определен');
+        
+        assert(typeof window.app === 'object', 'app должен быть объектом');
+        console.log('✅ window.app является объектом');
+        
+        assert(typeof window.app.checkAuth === 'function', 'checkAuth должен быть функцией');
+        console.log('✅ checkAuth является функцией');
+        
+        // Дополнительные проверки
+        const hasRequiredMethods = [
+            'viewOrderCard', 'startWork', 'declineOrder', 'cancelOrder',
+            'sendEstimate', 'completeOrder', 'editOrder', 'deleteOrder',
+            'restoreOrder', 'showOrderCards', 'performSearch', 'clearSearch'
+        ];
+        
+        let methodsFound = 0;
+        hasRequiredMethods.forEach(method => {
+            if (typeof window.app[method] === 'function') {
+                methodsFound++;
+                console.log(`✅ Метод ${method} найден`);
+            } else {
+                console.log(`❌ Метод ${method} не найден`);
+            }
+        });
+        
+        logTest('Инициализация приложения', true, 
+            `Приложение успешно инициализировано. Найдено методов: ${methodsFound}/${hasRequiredMethods.length}`);
         return true;
     } catch (error) {
+        console.error('❌ Ошибка инициализации:', error);
         logTest('Инициализация приложения', false, error.message);
         return false;
     }
@@ -241,6 +269,106 @@ function assert(condition, message) {
     }
 }
 
+// Тест 9: Проверка 3D эффектов
+function test3DEffects() {
+    try {
+        console.log('🔍 Проверка 3D эффектов...');
+        
+        // Проверка 3D классов
+        const threeDClasses = [
+            'btn-3d', 'burger-menu-3d', 'burger-dropdown-3d', 
+            'btn-group-3d', 'order-card-3d'
+        ];
+        
+        let foundClasses = 0;
+        threeDClasses.forEach(className => {
+            const elements = document.getElementsByClassName(className);
+            if (elements.length > 0) {
+                foundClasses++;
+                console.log(`✅ 3D класс ${className}: ${elements.length} элементов`);
+            } else {
+                console.log(`❌ 3D класс ${className}: не найден`);
+            }
+        });
+        
+        // Проверка CSS переменных для 3D
+        const computedStyle = getComputedStyle(document.documentElement);
+        const has3DVariables = [
+            '--shadow-3d', '--border-3d', '--transform-3d'
+        ];
+        
+        let variablesFound = 0;
+        has3DVariables.forEach(variable => {
+            const value = computedStyle.getPropertyValue(variable);
+            if (value && value.trim() !== '') {
+                variablesFound++;
+                console.log(`✅ CSS переменная ${variable}: ${value}`);
+            } else {
+                console.log(`❌ CSS переменная ${variable}: не найдена`);
+            }
+        });
+        
+        logTest('3D эффекты', foundClasses > 0, 
+            `Найдено 3D классов: ${foundClasses}/${threeDClasses.length}, CSS переменных: ${variablesFound}/${has3DVariables.length}`);
+        return foundClasses > 0;
+    } catch (error) {
+        console.error('❌ Ошибка проверки 3D эффектов:', error);
+        logTest('3D эффекты', false, error.message);
+        return false;
+    }
+}
+
+// Тест 10: Проверка логирования изменений
+function testChangeLogging() {
+    try {
+        console.log('🔍 Проверка логирования изменений...');
+        
+        // Проверка функций логирования
+        const loggingFunctions = [
+            'logOrderHistory', 'logUserAction', 'logSystemEvent'
+        ];
+        
+        let functionsFound = 0;
+        loggingFunctions.forEach(funcName => {
+            if (typeof window[funcName] === 'function') {
+                functionsFound++;
+                console.log(`✅ Функция логирования ${funcName}: найдена`);
+            } else {
+                console.log(`❌ Функция логирования ${funcName}: не найдена`);
+            }
+        });
+        
+        // Проверка элементов для истории
+        const historyElements = [
+            'orderHistoryContent', 'auditLogContent', 'changeLogContainer'
+        ];
+        
+        let elementsFound = 0;
+        historyElements.forEach(elementId => {
+            const element = document.getElementById(elementId);
+            if (element) {
+                elementsFound++;
+                console.log(`✅ Элемент истории ${elementId}: найден`);
+            } else {
+                console.log(`❌ Элемент истории ${elementId}: не найден`);
+            }
+        });
+        
+        // Проверка API для истории
+        const hasHistoryAPI = typeof window.app !== 'undefined' && 
+            typeof window.app.loadOrderHistory === 'function';
+        console.log('API истории заказов:', hasHistoryAPI ? 'найдено' : 'не найдено');
+        
+        logTest('Логирование изменений', functionsFound > 0 || elementsFound > 0, 
+            `Функций логирования: ${functionsFound}/${loggingFunctions.length}, элементов истории: ${elementsFound}/${historyElements.length}, API: ${hasHistoryAPI ? 'есть' : 'нет'}`);
+        return functionsFound > 0 || elementsFound > 0;
+    } catch (error) {
+        console.error('❌ Ошибка проверки логирования:', error);
+        logTest('Логирование изменений', false, error.message);
+        return false;
+    }
+}
+
 // Запуск всех тестов
 async function runAllTests() {
     console.log('🚀 Запуск тестов фронтенда...\n');
@@ -253,7 +381,9 @@ async function runAllTests() {
         testModals,
         testResponsiveness,
         testPerformance,
-        testFormValidation
+        testFormValidation,
+        test3DEffects,
+        testChangeLogging
     ];
     
     for (const test of tests) {

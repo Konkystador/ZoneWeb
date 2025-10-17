@@ -996,3 +996,132 @@ textarea.form-control {
     background-color: #6c757d;
     color: white;
 }
+
+/* ==================== 3D ЭФФЕКТЫ ==================== */
+
+/* 3D карточки заказов */
+.order-card-3d {
+    position: relative;
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 
+        4px 4px 8px rgba(0,0,0,0.1),
+        inset 1px 1px 2px rgba(255,255,255,0.5);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.order-card-3d:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        6px 6px 12px rgba(0,0,0,0.15),
+        inset 1px 1px 2px rgba(255,255,255,0.6);
+}
+
+.order-card-3d::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-green), var(--accent-green));
+    border-radius: 12px 12px 0 0;
+}
+
+/* 3D модальные окна */
+.modal-3d .modal-content {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: none;
+    border-radius: 16px;
+    box-shadow: 
+        8px 8px 16px rgba(0,0,0,0.2),
+        inset 1px 1px 2px rgba(255,255,255,0.5);
+}
+
+.modal-3d .modal-header {
+    background: linear-gradient(145deg, var(--primary-green), var(--accent-green));
+    color: white;
+    border-radius: 16px 16px 0 0;
+    border: none;
+}
+
+.modal-3d .modal-footer {
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border-radius: 0 0 16px 16px;
+    border: none;
+}
+
+/* 3D формы */
+.form-control-3d {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 
+        inset 2px 2px 4px rgba(0,0,0,0.1),
+        1px 1px 2px rgba(255,255,255,0.5);
+    transition: all 0.2s ease;
+}
+
+.form-control-3d:focus {
+    border-color: var(--primary-green);
+    box-shadow: 
+        inset 2px 2px 4px rgba(0,0,0,0.1),
+        1px 1px 2px rgba(255,255,255,0.5),
+        0 0 0 3px rgba(40, 167, 69, 0.25);
+    transform: translateY(-1px);
+}
+
+/* 3D навигация */
+.nav-3d {
+    background: linear-gradient(145deg, var(--primary-green), var(--accent-green));
+    box-shadow: 
+        0 4px 8px rgba(0,0,0,0.2),
+        inset 0 1px 2px rgba(255,255,255,0.3);
+}
+
+.nav-3d .navbar-brand {
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* 3D алерты */
+.alert-3d {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 
+        4px 4px 8px rgba(0,0,0,0.1),
+        inset 1px 1px 2px rgba(255,255,255,0.5);
+}
+
+.alert-3d.alert-success {
+    background: linear-gradient(145deg, #d4edda, #c3e6cb);
+    color: #155724;
+}
+
+.alert-3d.alert-danger {
+    background: linear-gradient(145deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+}
+
+.alert-3d.alert-warning {
+    background: linear-gradient(145deg, #fff3cd, #ffeaa7);
+    color: #856404;
+}
+
+.alert-3d.alert-info {
+    background: linear-gradient(145deg, #d1ecf1, #bee5eb);
+    color: #0c5460;
+}
+
+/* CSS переменные для 3D эффектов */
+:root {
+    --shadow-3d: 4px 4px 8px rgba(0,0,0,0.1);
+    --border-3d: 2px solid #e0e0e0;
+    --transform-3d: translateY(-2px);
+    --gradient-3d: linear-gradient(145deg, #ffffff, #f8f9fa);
+    --shadow-inset: inset 1px 1px 2px rgba(255,255,255,0.5);
+    --shadow-outset: 2px 2px 4px rgba(0,0,0,0.1);
+}
