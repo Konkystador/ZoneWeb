@@ -71,12 +71,9 @@ class WindowRepairApp {
     async runAPITests() {
         this.logTest('Запуск базовых API тестов...', 'info');
         try {
-            const response = await fetch('/tests/api-tests.js');
-            if (response.ok) {
-                this.logTest('Базовые API тесты запущены', 'success');
-            } else {
-                this.logTest('Ошибка запуска базовых API тестов', 'error');
-            }
+            // Открываем страницу тестов в новом окне
+            window.open('/tests/frontend-tests.html', '_blank');
+            this.logTest('Базовые API тесты открыты в новом окне', 'success');
         } catch (error) {
             this.logTest('Ошибка: ' + error.message, 'error');
         }
@@ -85,12 +82,9 @@ class WindowRepairApp {
     async runComprehensiveAPITests() {
         this.logTest('Запуск комплексных API тестов...', 'info');
         try {
-            const response = await fetch('/tests/comprehensive-api-tests.js');
-            if (response.ok) {
-                this.logTest('Комплексные API тесты запущены', 'success');
-            } else {
-                this.logTest('Ошибка запуска комплексных API тестов', 'error');
-            }
+            // Открываем страницу тестов в новом окне
+            window.open('/tests/frontend-comprehensive-tests.html', '_blank');
+            this.logTest('Комплексные API тесты открыты в новом окне', 'success');
         } catch (error) {
             this.logTest('Ошибка: ' + error.message, 'error');
         }
@@ -253,6 +247,90 @@ class WindowRepairApp {
         
         // Прокручиваем к последнему сообщению
         logEntry.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ==================== МЕТОДЫ ДЛЯ ГЛОБАЛЬНЫХ ФУНКЦИЙ ====================
+    
+    viewOrderCard(orderId) {
+        console.log('WindowRepairApp.viewOrderCard вызван, orderId:', orderId);
+        showOrderDetailsModal(this.orders.find(order => order.id == orderId));
+    }
+    
+    startWork(orderId) {
+        console.log('WindowRepairApp.startWork вызван, orderId:', orderId);
+        // Устанавливаем текущий заказ и переходим на страницу работы
+        currentWorkOrderId = orderId;
+        showPage('work');
+    }
+    
+    declineOrder(orderId) {
+        console.log('WindowRepairApp.declineOrder вызван, orderId:', orderId);
+        updateOrderStatus(orderId, 'declined');
+    }
+    
+    cancelOrder(orderId) {
+        console.log('WindowRepairApp.cancelOrder вызван, orderId:', orderId);
+        updateOrderStatus(orderId, 'cancelled');
+    }
+    
+    sendEstimate(orderId) {
+        console.log('WindowRepairApp.sendEstimate вызван, orderId:', orderId);
+        updateOrderStatus(orderId, 'estimate_sent');
+    }
+    
+    completeOrder(orderId) {
+        console.log('WindowRepairApp.completeOrder вызван, orderId:', orderId);
+        updateOrderStatus(orderId, 'completed');
+    }
+    
+    editOrder(orderId) {
+        console.log('WindowRepairApp.editOrder вызван, orderId:', orderId);
+        loadOrderForEditModal(orderId);
+    }
+    
+    deleteOrder(orderId) {
+        console.log('WindowRepairApp.deleteOrder вызван, orderId:', orderId);
+        if (confirm('Вы уверены, что хотите удалить этот заказ навсегда?')) {
+            fetch(`/api/orders/${orderId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Заказ удален', 'success');
+                    loadOrders();
+                } else {
+                    showAlert('Ошибка удаления заказа', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                showAlert('Ошибка соединения с сервером', 'danger');
+            });
+        }
+    }
+    
+    restoreOrder(orderId) {
+        console.log('WindowRepairApp.restoreOrder вызван, orderId:', orderId);
+        updateOrderStatus(orderId, 'pending');
+    }
+    
+    showOrderCards(status) {
+        console.log('WindowRepairApp.showOrderCards вызван, status:', status);
+        loadOrderCards(status);
+    }
+    
+    performSearch() {
+        console.log('WindowRepairApp.performSearch вызван');
+        performSearch();
+    }
+    
+    clearSearch() {
+        console.log('WindowRepairApp.clearSearch вызван');
+        clearSearch();
     }
 }
 

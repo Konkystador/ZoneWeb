@@ -43,6 +43,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
+app.use('/tests', express.static('tests'));
 
 // Rate limiting - отключаем для устранения ошибки с trust proxy
 // const limiter = rateLimit({
