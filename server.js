@@ -1379,6 +1379,98 @@ app.get('/api/orders/:id/history', requireAuth, (req, res) => {
   });
 });
 
+// Search orders
+app.get('/api/orders/search', requireAuth, (req, res) => {
+  const { order_number, client_name, client_phone, address, status, date_from, date_to } = req.query;
+  
+  let whereConditions = [];
+  let params = [];
+  
+  // Фильтрация по роли пользователя
+  if (req.session.userRole === 'admin') {
+    // Администратор видит все заказы
+  } else if (req.session.userRole === 'senior_manager') {
+    // Старший менеджер видит свои заказы и заказы подчиненных
+    whereConditions.push(`(o.created_by = ? OR o.assigned_to = ? OR u.manager_id = ?)`);
+    params.push(req.session.userId, req.session.userId, req.session.userId);
+  } else if (req.session.userRole === 'manager') {
+    // Менеджер видит свои заказы и заказы назначенных работников
+    whereConditions.push(`(o.created_by = ? OR o.assigned_to = ? OR u.manager_id = ?)`);
+    params.push(req.session.userId, req.session.userId, req.session.userId);
+  } else {
+    // Работник видит только свои заказы и назначенные ему
+    whereConditions.push(`(o.created_by = ? OR o.assigned_to = ?)`);
+    params.push(req.session.userId, req.session.userId);
+  }
+  
+  // Поиск по номеру заказа
+  if (order_number) {
+    whereConditions.push(`o.order_number LIKE ?`);
+    params.push(`%${order_number}%`);
+  }
+  
+  // Поиск по имени клиента
+  if (client_name) {
+    whereConditions.push(`o.client_name LIKE ?`);
+    params.push(`%${client_name}%`);
+  }
+  
+  // Поиск по телефону
+  if (client_phone) {
+    whereConditions.push(`o.client_phone LIKE ?`);
+    params.push(`%${client_phone}%`);
+  }
+  
+  // Поиск по адресу
+  if (address) {
+    whereConditions.push(`(o.address LIKE ? OR o.city LIKE ? OR o.street LIKE ?)`);
+    params.push(`%${address}%`, `%${address}%`, `%${address}%`);
+  }
+  
+  // Фильтр по статусу
+  if (status) {
+    whereConditions.push(`o.status = ?`);
+    params.push(status);
+  }
+  
+  // Фильтр по дате от
+  if (date_from) {
+    whereConditions.push(`DATE(o.created_at) >= ?`);
+    params.push(date_from);
+  }
+  
+  // Фильтр по дате до
+  if (date_to) {
+    whereConditions.push(`DATE(o.created_at) <= ?`);
+    params.push(date_to);
+  }
+  
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+  
+  const query = `
+    SELECT 
+      o.*,
+      u1.full_name as assigned_name,
+      u2.full_name as created_by_name,
+      u3.full_name as assigned_by_name
+    FROM orders o
+    LEFT JOIN users u1 ON o.assigned_to = u1.id
+    LEFT JOIN users u2 ON o.created_by = u2.id
+    LEFT JOIN users u3 ON o.assigned_to = u3.id
+    ${whereClause}
+    ORDER BY o.created_at DESC
+  `;
+  
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      console.error('Ошибка поиска заказов:', err);
+      return res.status(500).json({ error: 'Ошибка поиска заказов' });
+    }
+    
+    res.json(rows);
+  });
+});
+
 // Helper function to log order history
 function logOrderHistory(orderId, userId, action, actionText, changes = null) {
   const query = `INSERT INTO order_history (order_id, user_id, action, action_text, changes, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))`;

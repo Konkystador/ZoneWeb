@@ -38,51 +38,9 @@
         <!-- Navigation -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
             <div class="container-fluid">
-                <!-- Бургер-меню слева -->
-                <div class="navbar-nav">
-                    <div class="nav-item dropdown">
-                        <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><h6 class="dropdown-header">Навигация</h6></li>
-                            <li><a class="dropdown-item" href="#" data-page="dashboard">
-                                <i class="fas fa-tachometer-alt text-primary"></i> Главная панель
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" data-page="orders">
-                                <i class="fas fa-clipboard-list text-primary"></i> Заказы
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" data-page="estimates">
-                                <i class="fas fa-calculator text-primary"></i> Сметы
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Быстрые действия</h6></li>
-                            <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#newOrderModal">
-                                <i class="fas fa-plus-circle text-success"></i> Новый заказ
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="showOrderCards('pending')">
-                                <i class="fas fa-clock text-warning"></i> Предстоящие
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="showOrderCards('in_progress')">
-                                <i class="fas fa-play text-info"></i> В работе
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" onclick="showOrderCards('completed')">
-                                <i class="fas fa-check text-success"></i> Выполненные
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><h6 class="dropdown-header">Администрирование</h6></li>
-                            <li><a class="dropdown-item" href="#" data-page="admin" id="adminQuickMenu" style="display: none;">
-                                <i class="fas fa-cog text-secondary"></i> Настройки
-                            </a></li>
-                            <li><a class="dropdown-item" href="#" data-page="audit-log" id="auditQuickMenu" style="display: none;">
-                                <i class="fas fa-history text-secondary"></i> Журнал операций
-                            </a></li>
-                        </ul>
-                    </div>
-                    <a class="navbar-brand" href="#" data-page="dashboard">
-                        <i class="fas fa-window-maximize"></i> Оконные Мастера
-                    </a>
-                </div>
+                <a class="navbar-brand" href="#" data-page="dashboard">
+                    <i class="fas fa-window-maximize"></i> Оконные Мастера
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -130,6 +88,52 @@
                             </ul>
                         </li>
                     </ul>
+                    
+                    <!-- 3D Бургер-меню справа -->
+                    <div class="navbar-nav ms-auto">
+                        <div class="nav-item dropdown">
+                            <button class="btn btn-outline-light burger-menu-3d" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end burger-dropdown-3d">
+                                <li><h6 class="dropdown-header">Навигация</h6></li>
+                                <li><a class="dropdown-item" href="#" data-page="dashboard">
+                                    <i class="fas fa-tachometer-alt text-primary"></i> Главная панель
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-page="orders">
+                                    <i class="fas fa-clipboard-list text-primary"></i> Заказы
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-page="estimates">
+                                    <i class="fas fa-calculator text-primary"></i> Сметы
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-page="search">
+                                    <i class="fas fa-search text-info"></i> Поиск
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Быстрые действия</h6></li>
+                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#newOrderModal">
+                                    <i class="fas fa-plus-circle text-success"></i> Новый заказ
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showOrderCards('pending')">
+                                    <i class="fas fa-clock text-warning"></i> Предстоящие
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showOrderCards('in_progress')">
+                                    <i class="fas fa-play text-info"></i> В работе
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showOrderCards('completed')">
+                                    <i class="fas fa-check text-success"></i> Выполненные
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Администрирование</h6></li>
+                                <li><a class="dropdown-item" href="#" data-page="admin" id="adminQuickMenu" style="display: none;">
+                                    <i class="fas fa-cog text-secondary"></i> Настройки
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-page="audit-log" id="auditQuickMenu" style="display: none;">
+                                    <i class="fas fa-history text-secondary"></i> Журнал операций
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -227,27 +231,13 @@
                     </div>
                 </div>
                 
-                <!-- Фильтры -->
+                <!-- Уведомление о поиске -->
                 <div class="row mb-3">
-                    <div class="col-md-3">
-                        <select class="form-select" id="statusFilter">
-                            <option value="">Все статусы</option>
-                            <option value="pending">Ожидает</option>
-                            <option value="in_progress">В работе</option>
-                            <option value="completed">Завершен</option>
-                            <option value="cancelled">Отменен</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Поиск по клиенту или адресу">
-                    </div>
-                    <div class="col-md-3">
-                        <input type="date" class="form-control" id="dateFilter" placeholder="Фильтр по дате">
-                    </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-outline-secondary" onclick="app.applyFilters()">
-                            <i class="fas fa-filter"></i> Применить
-                        </button>
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Для поиска заказов используйте <strong>меню поиска</strong> в правом верхнем углу или перейдите на <a href="#" data-page="search" class="alert-link">страницу поиска</a>.
+                        </div>
                     </div>
                 </div>
 
@@ -315,6 +305,92 @@
                             </div>
                         </div>
                     </div>
+            </div>
+        </div>
+
+        <!-- Search Page -->
+        <div id="searchPage" class="page" style="display: none;">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-search"></i> Поиск заказов</h2>
+                        </div>
+                        
+                        <!-- Поисковая форма -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Поиск по номеру заказа</label>
+                                        <input type="text" class="form-control" id="searchOrderNumber" placeholder="ADM-000001">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Поиск по имени клиента</label>
+                                        <input type="text" class="form-control" id="searchClientName" placeholder="Иван Иванов">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Поиск по телефону</label>
+                                        <input type="tel" class="form-control" id="searchPhone" placeholder="+7 (999) 123-45-67">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Поиск по адресу</label>
+                                        <input type="text" class="form-control" id="searchAddress" placeholder="Москва, ул. Ленина, 1">
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Статус</label>
+                                        <select class="form-select" id="searchStatus">
+                                            <option value="">Все статусы</option>
+                                            <option value="pending">Ожидает</option>
+                                            <option value="in_progress">В работе</option>
+                                            <option value="estimate_sent">Смета отправлена</option>
+                                            <option value="completed">Завершен</option>
+                                            <option value="cancelled">Отменен</option>
+                                            <option value="declined">Отказ клиента</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Дата от</label>
+                                        <input type="date" class="form-control" id="searchDateFrom">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Дата до</label>
+                                        <input type="date" class="form-control" id="searchDateTo">
+                                    </div>
+                                    <div class="col-md-3 d-flex align-items-end">
+                                        <button class="btn btn-primary w-100" onclick="performSearch()">
+                                            <i class="fas fa-search"></i> Найти
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <button class="btn btn-outline-secondary" onclick="clearSearch()">
+                                            <i class="fas fa-times"></i> Очистить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Результаты поиска -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Результаты поиска</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="searchResults">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-search fa-3x mb-3"></i>
+                                        <p>Введите критерии поиска и нажмите "Найти"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1448,7 +1524,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Простое приложение (все в одном файле) -->
-    <script src="js/app-simple.js?v=12"></script>
+    <script src="js/app-simple.js?v=13"></script>
     <script src="js/estimate.js?v=6"></script>
     <script src="js/pdf-export.js?v=6"></script>
 </body>

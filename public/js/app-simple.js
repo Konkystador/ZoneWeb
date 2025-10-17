@@ -1709,6 +1709,88 @@ function getRoleText(role) {
     return roles[role] || role;
 }
 
+// Выполнить поиск заказов
+async function performSearch() {
+    console.log('Выполнение поиска заказов');
+    
+    const searchParams = {
+        order_number: document.getElementById('searchOrderNumber')?.value || '',
+        client_name: document.getElementById('searchClientName')?.value || '',
+        client_phone: document.getElementById('searchPhone')?.value || '',
+        address: document.getElementById('searchAddress')?.value || '',
+        status: document.getElementById('searchStatus')?.value || '',
+        date_from: document.getElementById('searchDateFrom')?.value || '',
+        date_to: document.getElementById('searchDateTo')?.value || ''
+    };
+    
+    // Убираем пустые параметры
+    const filteredParams = Object.fromEntries(
+        Object.entries(searchParams).filter(([key, value]) => value.trim() !== '')
+    );
+    
+    try {
+        const queryString = new URLSearchParams(filteredParams).toString();
+        const response = await fetch(`/api/orders/search?${queryString}`);
+        
+        if (response.ok) {
+            const orders = await response.json();
+            displaySearchResults(orders);
+        } else {
+            showAlert('Ошибка поиска заказов', 'danger');
+        }
+    } catch (error) {
+        console.error('Ошибка поиска:', error);
+        showAlert('Ошибка соединения с сервером', 'danger');
+    }
+}
+
+// Отобразить результаты поиска
+function displaySearchResults(orders) {
+    const resultsContainer = document.getElementById('searchResults');
+    
+    if (!orders || orders.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <p>По вашему запросу ничего не найдено</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let resultsHtml = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6>Найдено заказов: ${orders.length}</h6>
+        </div>
+        <div class="row">
+    `;
+    
+    orders.forEach(order => {
+        resultsHtml += createOrderCardHtml(order);
+    });
+    
+    resultsHtml += '</div>';
+    resultsContainer.innerHTML = resultsHtml;
+}
+
+// Очистить поиск
+function clearSearch() {
+    document.getElementById('searchOrderNumber').value = '';
+    document.getElementById('searchClientName').value = '';
+    document.getElementById('searchPhone').value = '';
+    document.getElementById('searchAddress').value = '';
+    document.getElementById('searchStatus').value = '';
+    document.getElementById('searchDateFrom').value = '';
+    document.getElementById('searchDateTo').value = '';
+    
+    document.getElementById('searchResults').innerHTML = `
+        <div class="text-center text-muted">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <p>Введите критерии поиска и нажмите "Найти"</p>
+        </div>
+    `;
+}
+
 // Загрузка истории изменений заказа
 async function loadOrderHistory(orderId) {
     try {
@@ -1762,6 +1844,129 @@ function displayOrderHistory(history) {
     historyHtml += '</div>';
     historyContent.innerHTML = historyHtml;
 }
+
+// ==================== ГЛОБАЛЬНЫЕ ФУНКЦИИ-ОБЕРТКИ ====================
+
+// Глобальные функции для onclick атрибутов
+window.showOrderCards = function(status) {
+    if (window.app && window.app.showOrderCards) {
+        window.app.showOrderCards(status);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.viewOrderCard = function(orderId) {
+    if (window.app && window.app.viewOrderCard) {
+        window.app.viewOrderCard(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.startWork = function(orderId) {
+    if (window.app && window.app.startWork) {
+        window.app.startWork(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.declineOrder = function(orderId) {
+    if (window.app && window.app.declineOrder) {
+        window.app.declineOrder(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.cancelOrder = function(orderId) {
+    if (window.app && window.app.cancelOrder) {
+        window.app.cancelOrder(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.editOrder = function(orderId) {
+    if (window.app && window.app.editOrder) {
+        window.app.editOrder(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.sendEstimate = function(orderId) {
+    if (window.app && window.app.sendEstimate) {
+        window.app.sendEstimate(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.completeOrder = function(orderId) {
+    if (window.app && window.app.completeOrder) {
+        window.app.completeOrder(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.deleteOrder = function(orderId) {
+    if (window.app && window.app.deleteOrder) {
+        window.app.deleteOrder(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.restoreOrder = function(orderId) {
+    if (window.app && window.app.restoreOrder) {
+        window.app.restoreOrder(orderId);
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.clearAllOrders = function() {
+    if (window.app && window.app.clearAllOrders) {
+        window.app.clearAllOrders();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.restoreAllOrders = function() {
+    if (window.app && window.app.restoreAllOrders) {
+        window.app.restoreAllOrders();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.toggleSelectAll = function() {
+    if (window.app && window.app.toggleSelectAll) {
+        window.app.toggleSelectAll();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.performSearch = function() {
+    if (window.app && window.app.performSearch) {
+        window.app.performSearch();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
+
+window.clearSearch = function() {
+    if (window.app && window.app.clearSearch) {
+        window.app.clearSearch();
+    } else {
+        console.error('Приложение не инициализировано');
+    }
+};
 
 // ==================== НАСТРОЙКА ОБРАБОТЧИКОВ СОБЫТИЙ ====================
 
@@ -1985,6 +2190,13 @@ function showOrderDetailsModal(order) {
         // Убираем aria-hidden и восстанавливаем нормальное состояние
         modalElement.removeAttribute('aria-hidden');
         modalElement.style.display = 'none';
-        modalElement.remove();
+        // Убираем фокус с кнопок перед удалением
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.blur) {
+            activeElement.blur();
+        }
+        setTimeout(() => {
+            modalElement.remove();
+        }, 100);
     }, { once: true });
 }
