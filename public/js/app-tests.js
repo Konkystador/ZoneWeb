@@ -499,6 +499,10 @@ async function runAllTests() {
     });
     
     // Отображаем результаты на сайте
+    console.log('🔍 Отображаем результаты на сайте...');
+    console.log('📍 testResults.length:', testResults.length);
+    console.log('📍 passedTests:', passedTests);
+    console.log('📍 failedTests:', failedTests);
     displayTestResults();
     
     return {
@@ -539,7 +543,15 @@ function showTestResults(message, type = 'info') {
                 </div>
             </div>
         `;
-        document.querySelector('.container-fluid').appendChild(resultsContainer);
+        
+        // Добавляем контейнер в основной контент
+        const mainContent = document.querySelector('.container-fluid');
+        if (mainContent) {
+            mainContent.appendChild(resultsContainer);
+        } else {
+            // Fallback - добавляем в body
+            document.body.appendChild(resultsContainer);
+        }
     }
     
     const content = document.getElementById('testResultsContent');
@@ -550,6 +562,9 @@ function showTestResults(message, type = 'info') {
 
 // Функция для отображения полных результатов
 function displayTestResults() {
+    console.log('🔍 displayTestResults вызвана');
+    console.log('📍 testResults:', testResults);
+    
     const successRate = Math.round((passedTests / (passedTests + failedTests)) * 100);
     const statusClass = failedTests === 0 ? 'success' : 'warning';
     
@@ -607,9 +622,19 @@ function displayTestResults() {
         </div>
     `;
     
+    console.log('🔍 HTML сгенерирован, длина:', html.length);
+    
     const content = document.getElementById('testResultsContent');
+    console.log('🔍 testResultsContent найден:', !!content);
+    
     if (content) {
         content.innerHTML = html;
+        console.log('✅ Результаты отображены на сайте');
+    } else {
+        console.error('❌ Элемент testResultsContent не найден');
+        // Fallback - показываем в консоли
+        console.log('Результаты тестов:');
+        console.log(html);
     }
 }
 
@@ -637,17 +662,76 @@ function copyTestResults() {
         text += `   ${result.timestamp}\n\n`;
     });
     
-    navigator.clipboard.writeText(text).then(() => {
-        console.log('📋 Результаты скопированы в буфер обмена!');
-        if (window.app && window.app.showAlert) {
-            window.app.showAlert('Результаты скопированы в буфер обмена!', 'success');
+    // Проверяем поддержку clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            console.log('📋 Результаты скопированы в буфер обмена!');
+            showAlert('Результаты скопированы в буфер обмена!', 'success');
+        }).catch(err => {
+            console.error('Ошибка копирования:', err);
+            fallbackCopyTextToClipboard(text);
+        });
+    } else {
+        // Fallback для старых браузеров
+        fallbackCopyTextToClipboard(text);
+    }
+}
+
+// Fallback функция для копирования
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    
+    // Избегаем прокрутки к элементу
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            console.log('📋 Результаты скопированы в буфер обмена!');
+            showAlert('Результаты скопированы в буфер обмена!', 'success');
+        } else {
+            throw new Error('Copy command failed');
         }
-    }).catch(err => {
+    } catch (err) {
         console.error('Ошибка копирования:', err);
-        if (window.app && window.app.showAlert) {
-            window.app.showAlert('Ошибка копирования: ' + err.message, 'danger');
-        }
-    });
+        showAlert('Ошибка копирования. Результаты выведены в консоль.', 'warning');
+        console.log('Результаты тестов:');
+        console.log(text);
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Функция для показа уведомлений
+function showAlert(message, type) {
+    if (window.app && window.app.showAlert) {
+        window.app.showAlert(message, type);
+    } else {
+        // Fallback уведомление
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        // Автоматически скрываем через 5 секунд
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 5000);
+    }
 }
 
 // Добавляем функции в глобальную область видимости
