@@ -11,6 +11,7 @@ const helmet = require('helmet');             // Безопасность HTTP �
 const rateLimit = require('express-rate-limit'); // Ограничение частоты запросов
 const { v4: uuidv4 } = require('uuid');       // Генерация уникальных идентификаторов
 const moment = require('moment');             // Работа с датами и временем
+const compression = require('compression');   // Gzip сжатие для оптимизации
 
 // Создание экземпляра Express приложения
 const app = express();
@@ -22,6 +23,7 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Настройка middleware (промежуточного ПО)
+app.use(compression()); // Gzip сжатие для оптимизации производительности
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -42,7 +44,11 @@ app.use(helmet({
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static('public', { 
+  maxAge: '1d', // Кэширование статических файлов на 1 день
+  etag: true,   // Включить ETag для оптимизации
+  lastModified: true // Включить Last-Modified заголовки
+}));
 app.use('/tests', express.static('tests'));
 
 // Rate limiting - отключаем для устранения ошибки с trust proxy

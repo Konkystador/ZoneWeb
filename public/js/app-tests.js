@@ -134,9 +134,30 @@ function testCSSClasses() {
             }
         });
         
-        const success = foundClasses >= 2; // Минимум 2 класса должны быть найдены
+        // Проверяем также CSS переменные
+        const root = document.documentElement;
+        const computedStyle = getComputedStyle(root);
+        const cssVars = [
+            '--primary-green',
+            '--accent-green',
+            '--shadow-3d',
+            '--border-3d',
+            '--gradient-3d'
+        ];
+        
+        let foundVars = 0;
+        cssVars.forEach(varName => {
+            if (computedStyle.getPropertyValue(varName)) {
+                foundVars++;
+                console.log(`✅ CSS переменная ${varName}: найдена`);
+            } else {
+                console.log(`❌ CSS переменная ${varName}: не найдена`);
+            }
+        });
+        
+        const success = foundClasses >= 3; // Минимум 3 класса должны быть найдены
         logTest('CSS классы', success, 
-            `Найдено: ${foundClasses}/${requiredClasses.length}, классы: ${foundList.join(', ')}`);
+            `Найдено: ${foundClasses}/${requiredClasses.length}, классы: ${foundList.join(', ')}, переменные: ${foundVars}/${cssVars.length}`);
         return success;
     } catch (error) {
         console.error('❌ Ошибка проверки CSS классов:', error);
@@ -461,29 +482,48 @@ function testResponsiveness() {
         const bootstrapClasses = [
             'container',
             'row',
-            'col-',
+            'col-12',
+            'col-sm-6',
+            'col-md-3',
             'd-none',
-            'd-md-block'
+            'd-md-block',
+            'text-center',
+            'mb-3'
         ];
         
         let foundBootstrap = 0;
+        const foundClasses = [];
+        
         bootstrapClasses.forEach(className => {
             if (className.includes('-')) {
                 const elements = document.querySelectorAll(`[class*="${className}"]`);
                 if (elements.length > 0) {
                     foundBootstrap++;
+                    foundClasses.push(className);
+                    console.log(`✅ Bootstrap класс ${className}: найдено ${elements.length} элементов`);
+                } else {
+                    console.log(`❌ Bootstrap класс ${className}: не найдено`);
                 }
             } else {
                 const elements = document.querySelectorAll(`.${className}`);
                 if (elements.length > 0) {
                     foundBootstrap++;
+                    foundClasses.push(className);
+                    console.log(`✅ Bootstrap класс ${className}: найдено ${elements.length} элементов`);
+                } else {
+                    console.log(`❌ Bootstrap класс ${className}: не найдено`);
                 }
             }
         });
         
-        const success = foundBootstrap >= 2;
+        // Проверяем viewport meta tag
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        const hasViewport = !!viewportMeta;
+        console.log(`📍 Viewport meta tag: ${hasViewport ? 'найден' : 'не найден'}`);
+        
+        const success = foundBootstrap >= 4 && hasViewport; // Минимум 4 класса и viewport
         logTest('Адаптивность', success, 
-            `Bootstrap классов: ${foundBootstrap}/${bootstrapClasses.length}, медиа-запросы: ${foundQueries}/${mediaQueries.length}`);
+            `Bootstrap классов: ${foundBootstrap}/${bootstrapClasses.length}, медиа-запросы: ${foundQueries}/${mediaQueries.length}, viewport: ${hasViewport ? 'да' : 'нет'}`);
         return success;
     } catch (error) {
         console.error('❌ Ошибка проверки адаптивности:', error);
