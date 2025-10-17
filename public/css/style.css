@@ -1015,21 +1015,41 @@ textarea.form-control {
 .order-card-3d.bg-primary {
     background: linear-gradient(145deg, #0d6efd, #0b5ed7) !important;
     color: white !important;
+    border: 2px solid #0a58ca !important;
 }
 
 .order-card-3d.bg-success {
     background: linear-gradient(145deg, #198754, #157347) !important;
     color: white !important;
+    border: 2px solid #146c43 !important;
 }
 
 .order-card-3d.bg-warning {
     background: linear-gradient(145deg, #ffc107, #ffca2c) !important;
     color: #000 !important;
+    border: 2px solid #ffca2c !important;
 }
 
 .order-card-3d.bg-info {
     background: linear-gradient(145deg, #0dcaf0, #3dd5f3) !important;
     color: #000 !important;
+    border: 2px solid #0aa2c0 !important;
+}
+
+/* Убираем псевдо-элемент для цветных карточек */
+.order-card-3d.bg-primary::before,
+.order-card-3d.bg-success::before,
+.order-card-3d.bg-warning::before,
+.order-card-3d.bg-info::before {
+    display: none !important;
+}
+
+/* Убираем тени для цветных карточек */
+.order-card-3d.bg-primary,
+.order-card-3d.bg-success,
+.order-card-3d.bg-warning,
+.order-card-3d.bg-info {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
 }
 
 /* Добавляем 3D эффект только для карточек без цветного фона */

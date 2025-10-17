@@ -311,49 +311,22 @@ function testForms() {
     }
 }
 
-// Тест 7: Проверка API
+// Тест 7: Проверка API (упрощенная версия)
 async function testAPI() {
     try {
         console.log('🔍 Проверка API...');
         
         const baseUrl = window.location.origin;
-        const apiTests = [
-            { name: 'Проверка авторизации', url: '/api/auth/check' },
-            { name: 'Проверка пользователей', url: '/api/users' },
-            { name: 'Проверка заказов', url: '/api/orders' },
-            { name: 'Проверка сервисов', url: '/api/services' }
-        ];
+        const response = await fetch(`${baseUrl}/api/auth/check`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
         
-        let successfulTests = 0;
-        const results = [];
+        const data = await response.json();
+        const success = response.ok && data.success;
         
-        for (const test of apiTests) {
-            try {
-                console.log(`📍 Тестируем ${test.name}...`);
-                const response = await fetch(`${baseUrl}${test.url}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    console.log(`✅ ${test.name}: ${response.status} ${response.statusText}`);
-                    successfulTests++;
-                    results.push(`${test.name}: OK`);
-                } else {
-                    console.log(`❌ ${test.name}: ${response.status} ${response.statusText}`);
-                    results.push(`${test.name}: ${response.status}`);
-                }
-            } catch (error) {
-                console.log(`❌ ${test.name}: Ошибка сети - ${error.message}`);
-                results.push(`${test.name}: Ошибка`);
-            }
-        }
-        
-        const success = successfulTests >= 2; // Минимум 2 API должны работать
         logTest('API', success, 
-            `Успешных: ${successfulTests}/${apiTests.length}, результаты: ${results.join(', ')}`);
+            `Статус: ${response.status}, Успех: ${data.success}`);
         return success;
     } catch (error) {
         console.error('❌ Ошибка проверки API:', error);

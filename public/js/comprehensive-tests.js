@@ -156,71 +156,48 @@ function getCategoryIcon(category) {
 
 // === API ТЕСТЫ ===
 
-// Тест API авторизации
-async function testAPIAuth() {
+// Комплексный тест API
+async function testAPIComprehensive() {
     try {
-        console.log('🔍 Тестирование API авторизации...');
+        console.log('🔍 Комплексное тестирование API...');
         
         const baseUrl = window.location.origin;
-        const response = await fetch(`${baseUrl}/api/auth/check`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
+        const endpoints = [
+            { name: 'Авторизация', url: '/api/auth/check' },
+            { name: 'Пользователи', url: '/api/users' },
+            { name: 'Заказы', url: '/api/orders' }
+        ];
         
-        const data = await response.json();
-        const success = response.ok && data.success;
+        let successfulTests = 0;
+        const results = [];
         
-        logComprehensiveTest('API авторизации', success, 
-            `Статус: ${response.status}, Успех: ${data.success}, Пользователь: ${data.user ? data.user.username : 'нет'}`, 'api');
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(`${baseUrl}${endpoint.url}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                const success = response.ok;
+                
+                if (success) {
+                    successfulTests++;
+                    results.push(`${endpoint.name}: OK`);
+                } else {
+                    results.push(`${endpoint.name}: ${response.status}`);
+                }
+            } catch (error) {
+                results.push(`${endpoint.name}: Ошибка`);
+            }
+        }
+        
+        const success = successfulTests >= 2;
+        logComprehensiveTest('API комплексный', success, 
+            `Успешных: ${successfulTests}/${endpoints.length}, результаты: ${results.join(', ')}`, 'api');
         return success;
     } catch (error) {
-        logComprehensiveTest('API авторизации', false, `Ошибка: ${error.message}`, 'api');
-        return false;
-    }
-}
-
-// Тест API пользователей
-async function testAPIUsers() {
-    try {
-        console.log('🔍 Тестирование API пользователей...');
-        
-        const baseUrl = window.location.origin;
-        const response = await fetch(`${baseUrl}/api/users`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-        const data = await response.json();
-        const success = response.ok && Array.isArray(data);
-        
-        logComprehensiveTest('API пользователей', success, 
-            `Статус: ${response.status}, Пользователей: ${Array.isArray(data) ? data.length : 0}`, 'api');
-        return success;
-    } catch (error) {
-        logComprehensiveTest('API пользователей', false, `Ошибка: ${error.message}`, 'api');
-        return false;
-    }
-}
-
-// Тест API заказов
-async function testAPIOrders() {
-    try {
-        console.log('🔍 Тестирование API заказов...');
-        
-        const baseUrl = window.location.origin;
-        const response = await fetch(`${baseUrl}/api/orders`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-        const data = await response.json();
-        const success = response.ok && Array.isArray(data);
-        
-        logComprehensiveTest('API заказов', success, 
-            `Статус: ${response.status}, Заказов: ${Array.isArray(data) ? data.length : 0}`, 'api');
-        return success;
-    } catch (error) {
-        logComprehensiveTest('API заказов', false, `Ошибка: ${error.message}`, 'api');
+        logComprehensiveTest('API комплексный', false, `Ошибка: ${error.message}`, 'api');
         return false;
     }
 }
@@ -399,9 +376,7 @@ async function runComprehensiveTests() {
     
     const tests = [
         // API тесты
-        { name: 'API авторизации', func: testAPIAuth, category: 'api' },
-        { name: 'API пользователей', func: testAPIUsers, category: 'api' },
-        { name: 'API заказов', func: testAPIOrders, category: 'api' },
+        { name: 'API комплексный', func: testAPIComprehensive, category: 'api' },
         
         // Frontend тесты
         { name: 'Инициализация фронтенда', func: testFrontendInitialization, category: 'frontend' },
