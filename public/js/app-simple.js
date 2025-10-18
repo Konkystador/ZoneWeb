@@ -46,6 +46,9 @@ class WindowRepairApp {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
         document.getElementById('userName').textContent = this.currentUser.full_name || this.currentUser.username;
+        
+        // После входа сразу показываем активные заказы
+        this.showPage('orders');
     }
 
     setupRoleBasedUI() {
@@ -259,6 +262,11 @@ function showMainApp() {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('mainApp').style.display = 'block';
     document.getElementById('userName').textContent = currentUser.full_name || currentUser.username;
+    
+    // После входа сразу показываем активные заказы
+    if (window.app) {
+        window.app.showPage('orders');
+    }
 }
 
 function setupRoleBasedUI() {

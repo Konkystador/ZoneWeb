@@ -207,6 +207,47 @@ const db = new sqlite3.Database('window_repair.db');
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // Estimates table
+  db.run(`CREATE TABLE IF NOT EXISTS estimates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    created_by INTEGER NOT NULL,
+    status TEXT DEFAULT 'draft',
+    total_amount REAL DEFAULT 0,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+  )`);
+
+  // Estimate items table
+  db.run(`CREATE TABLE IF NOT EXISTS estimate_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    estimate_id INTEGER NOT NULL,
+    service_id INTEGER NOT NULL,
+    quantity REAL NOT NULL,
+    unit_price REAL NOT NULL,
+    total_price REAL NOT NULL,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (estimate_id) REFERENCES estimates(id),
+    FOREIGN KEY (service_id) REFERENCES services(id)
+  )`);
+
+  // Estimate history table
+  db.run(`CREATE TABLE IF NOT EXISTS estimate_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    estimate_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    old_value TEXT,
+    new_value TEXT,
+    changed_by INTEGER NOT NULL,
+    changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (estimate_id) REFERENCES estimates(id),
+    FOREIGN KEY (changed_by) REFERENCES users(id)
+  )`);
+
   // Service profiles table
   db.run(`CREATE TABLE IF NOT EXISTS service_profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1071,6 +1112,299 @@ app.get('/api/users/assignable', requireAuth, (req, res) => {
       return res.status(500).json({ error: 'Ошибка получения пользователей' });
     }
     res.json(users);
+  });
+});
+
+// Estimates routes
+// Get all estimates
+app.get('/api/estimates', requireAuth, (req, res) => {
+  const { order_id, status } = req.query;
+  let query = `
+    SELECT e.*, 
+      o.order_number, o.client_name, o.client_phone,
+      u.full_name as created_by_name
+    FROM estimates e
+    LEFT JOIN orders o ON e.order_id = o.id
+    LEFT JOIN users u ON e.created_by = u.id
+    WHERE 1=1
+  `;
+  let params = [];
+
+  if (order_id) {
+    query += ' AND e.order_id = ?';
+    params.push(order_id);
+  }
+  
+  if (status) {
+    query += ' AND e.status = ?';
+    params.push(status);
+  }
+
+  query += ' ORDER BY e.created_at DESC';
+
+  db.all(query, params, (err, estimates) => {
+    if (err) {
+      console.error('Ошибка получения смет:', err);
+      return res.status(500).json({ error: 'Ошибка получения смет' });
+    }
+    res.json(estimates);
+  });
+});
+
+// Get estimate by ID with items
+app.get('/api/estimates/:id', requireAuth, (req, res) => {
+  const estimateId = req.params.id;
+  
+  // Get estimate details
+  db.get(`
+    SELECT e.*, 
+      o.order_number, o.client_name, o.client_phone, o.address,
+      u.full_name as created_by_name
+    FROM estimates e
+    LEFT JOIN orders o ON e.order_id = o.id
+    LEFT JOIN users u ON e.created_by = u.id
+    WHERE e.id = ?
+  `, [estimateId], (err, estimate) => {
+    if (err) {
+      console.error('Ошибка получения сметы:', err);
+      return res.status(500).json({ error: 'Ошибка получения сметы' });
+    }
+    
+    if (!estimate) {
+      return res.status(404).json({ error: 'Смета не найдена' });
+    }
+
+    // Get estimate items
+    db.all(`
+      SELECT ei.*, s.name as service_name, s.unit_type
+      FROM estimate_items ei
+      LEFT JOIN services s ON ei.service_id = s.id
+      WHERE ei.estimate_id = ?
+      ORDER BY ei.id
+    `, [estimateId], (err, items) => {
+      if (err) {
+        console.error('Ошибка получения позиций сметы:', err);
+        return res.status(500).json({ error: 'Ошибка получения позиций сметы' });
+      }
+      
+      estimate.items = items;
+      res.json(estimate);
+    });
+  });
+});
+
+// Create new estimate
+app.post('/api/estimates', requireAuth, (req, res) => {
+  const { order_id, items, notes } = req.body;
+  
+  if (!order_id || !items || !Array.isArray(items)) {
+    return res.status(400).json({ error: 'Неверные данные сметы' });
+  }
+
+  // Check if order exists and is in correct status
+  db.get('SELECT status FROM orders WHERE id = ?', [order_id], (err, order) => {
+    if (err) {
+      console.error('Ошибка проверки заказа:', err);
+      return res.status(500).json({ error: 'Ошибка проверки заказа' });
+    }
+    
+    if (!order) {
+      return res.status(404).json({ error: 'Заказ не найден' });
+    }
+    
+    if (order.status !== 'in_progress') {
+      return res.status(400).json({ error: 'Сметы можно создавать только для заказов в работе' });
+    }
+
+    // Calculate total amount
+    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+
+    // Create estimate
+    db.run(`
+      INSERT INTO estimates (order_id, created_by, total_amount, notes, status)
+      VALUES (?, ?, ?, ?, 'draft')
+    `, [order_id, req.session.userId, totalAmount, notes], function(err) {
+      if (err) {
+        console.error('Ошибка создания сметы:', err);
+        return res.status(500).json({ error: 'Ошибка создания сметы' });
+      }
+
+      const estimateId = this.lastID;
+
+      // Create estimate items
+      const itemPromises = items.map(item => {
+        return new Promise((resolve, reject) => {
+          db.run(`
+            INSERT INTO estimate_items (estimate_id, service_id, quantity, unit_price, total_price, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `, [
+            estimateId, 
+            item.service_id, 
+            item.quantity, 
+            item.unit_price, 
+            item.quantity * item.unit_price,
+            item.notes || null
+          ], function(err) {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+        });
+      });
+
+      Promise.all(itemPromises)
+        .then(() => {
+          // Log to history
+          db.run(`
+            INSERT INTO estimate_history (estimate_id, action, new_value, changed_by)
+            VALUES (?, 'created', ?, ?)
+          `, [estimateId, `Смета создана. Сумма: ${totalAmount}`, req.session.userId]);
+
+          res.json({ 
+            success: true, 
+            estimate_id: estimateId,
+            message: 'Смета успешно создана' 
+          });
+        })
+        .catch(err => {
+          console.error('Ошибка создания позиций сметы:', err);
+          res.status(500).json({ error: 'Ошибка создания позиций сметы' });
+        });
+    });
+  });
+});
+
+// Update estimate
+app.put('/api/estimates/:id', requireAuth, (req, res) => {
+  const estimateId = req.params.id;
+  const { items, notes, status } = req.body;
+
+  // Get current estimate
+  db.get('SELECT * FROM estimates WHERE id = ?', [estimateId], (err, estimate) => {
+    if (err) {
+      console.error('Ошибка получения сметы:', err);
+      return res.status(500).json({ error: 'Ошибка получения сметы' });
+    }
+    
+    if (!estimate) {
+      return res.status(404).json({ error: 'Смета не найдена' });
+    }
+
+    // Update estimate
+    const updateFields = [];
+    const updateValues = [];
+
+    if (items && Array.isArray(items)) {
+      const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+      updateFields.push('total_amount = ?');
+      updateValues.push(totalAmount);
+    }
+
+    if (notes !== undefined) {
+      updateFields.push('notes = ?');
+      updateValues.push(notes);
+    }
+
+    if (status) {
+      updateFields.push('status = ?');
+      updateValues.push(status);
+    }
+
+    updateFields.push('updated_at = CURRENT_TIMESTAMP');
+    updateValues.push(estimateId);
+
+    if (updateFields.length === 1) { // Only updated_at
+      return res.status(400).json({ error: 'Нет данных для обновления' });
+    }
+
+    db.run(`
+      UPDATE estimates 
+      SET ${updateFields.join(', ')}
+      WHERE id = ?
+    `, updateValues, function(err) {
+      if (err) {
+        console.error('Ошибка обновления сметы:', err);
+        return res.status(500).json({ error: 'Ошибка обновления сметы' });
+      }
+
+      // Update items if provided
+      if (items && Array.isArray(items)) {
+        // Delete old items
+        db.run('DELETE FROM estimate_items WHERE estimate_id = ?', [estimateId], (err) => {
+          if (err) {
+            console.error('Ошибка удаления старых позиций:', err);
+            return res.status(500).json({ error: 'Ошибка обновления позиций сметы' });
+          }
+
+          // Insert new items
+          const itemPromises = items.map(item => {
+            return new Promise((resolve, reject) => {
+              db.run(`
+                INSERT INTO estimate_items (estimate_id, service_id, quantity, unit_price, total_price, notes)
+                VALUES (?, ?, ?, ?, ?, ?)
+              `, [
+                estimateId, 
+                item.service_id, 
+                item.quantity, 
+                item.unit_price, 
+                item.quantity * item.unit_price,
+                item.notes || null
+              ], function(err) {
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              });
+            });
+          });
+
+          Promise.all(itemPromises)
+            .then(() => {
+              // Log to history
+              db.run(`
+                INSERT INTO estimate_history (estimate_id, action, old_value, new_value, changed_by)
+                VALUES (?, 'updated', ?, ?, ?)
+              `, [estimateId, JSON.stringify(estimate), JSON.stringify(req.body), req.session.userId]);
+
+              res.json({ success: true, message: 'Смета успешно обновлена' });
+            })
+            .catch(err => {
+              console.error('Ошибка создания новых позиций:', err);
+              res.status(500).json({ error: 'Ошибка обновления позиций сметы' });
+            });
+        });
+      } else {
+        // Log to history
+        db.run(`
+          INSERT INTO estimate_history (estimate_id, action, old_value, new_value, changed_by)
+          VALUES (?, 'updated', ?, ?, ?)
+        `, [estimateId, JSON.stringify(estimate), JSON.stringify(req.body), req.session.userId]);
+
+        res.json({ success: true, message: 'Смета успешно обновлена' });
+      }
+    });
+  });
+});
+
+// Get estimate history
+app.get('/api/estimates/:id/history', requireAuth, (req, res) => {
+  const estimateId = req.params.id;
+  
+  db.all(`
+    SELECT eh.*, u.full_name as changed_by_name
+    FROM estimate_history eh
+    LEFT JOIN users u ON eh.changed_by = u.id
+    WHERE eh.estimate_id = ?
+    ORDER BY eh.changed_at DESC
+  `, [estimateId], (err, history) => {
+    if (err) {
+      console.error('Ошибка получения истории сметы:', err);
+      return res.status(500).json({ error: 'Ошибка получения истории сметы' });
+    }
+    res.json(history);
   });
 });
 
