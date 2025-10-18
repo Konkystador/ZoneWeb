@@ -1559,6 +1559,130 @@
         </div>
     </div>
 
+    <!-- Модальное окно для работы со сметами -->
+    <div class="modal fade" id="estimateModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content modal-3d">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-calculator"></i> 
+                        <span id="estimateModalTitle">Создание сметы</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Информация о заказе -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Информация о заказе</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Номер заказа:</strong> <span id="estimateOrderNumber">-</span><br>
+                                            <strong>Клиент:</strong> <span id="estimateClientName">-</span><br>
+                                            <strong>Телефон:</strong> <span id="estimateClientPhone">-</span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Адрес:</strong> <span id="estimateClientAddress">-</span><br>
+                                            <strong>Проблема:</strong> <span id="estimateProblem">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Позиции сметы -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6>Позиции сметы</h6>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addEstimateItem()">
+                                    <i class="fas fa-plus"></i> Добавить позицию
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="estimateItemsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Услуга</th>
+                                            <th>Количество</th>
+                                            <th>Ед. изм.</th>
+                                            <th>Цена за ед.</th>
+                                            <th>Сумма</th>
+                                            <th>Примечание</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="estimateItemsBody">
+                                        <!-- Позиции будут добавлены динамически -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Итоговая сумма -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h5>Итого: <span id="estimateTotalAmount">0</span> ₽</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Примечания -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="estimateNotes" class="form-label">Примечания к смете</label>
+                            <textarea class="form-control" id="estimateNotes" rows="3" placeholder="Дополнительная информация..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- История изменений (только для редактирования) -->
+                    <div class="row" id="estimateHistorySection" style="display: none;">
+                        <div class="col-12">
+                            <h6>История изменений</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Дата</th>
+                                            <th>Действие</th>
+                                            <th>Автор</th>
+                                            <th>Изменения</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="estimateHistoryBody">
+                                        <!-- История будет загружена динамически -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-info" id="estimateHistoryBtn" onclick="toggleEstimateHistory()" style="display: none;">
+                        <i class="fas fa-history"></i> История
+                    </button>
+                    <button type="button" class="btn btn-warning" id="estimateSaveBtn" onclick="saveEstimate()">
+                        <i class="fas fa-save"></i> Сохранить
+                    </button>
+                    <button type="button" class="btn btn-success" id="estimateApproveBtn" onclick="approveEstimate()" style="display: none;">
+                        <i class="fas fa-check"></i> Утвердить
+                    </button>
+                    <button type="button" class="btn btn-primary" id="estimateExportBtn" onclick="exportEstimateToPDF()" style="display: none;">
+                        <i class="fas fa-file-pdf"></i> Экспорт PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1566,6 +1690,7 @@
     <script src="js/app-simple.js?v=23"></script>
     <script src="js/estimate.js?v=6"></script>
     <script src="js/pdf-export.js?v=6"></script>
+    <script src="js/estimate-modal.js?v=1"></script>
     
     <!-- Тесты приложения -->
     <script src="js/app-tests.js?v=1"></script>

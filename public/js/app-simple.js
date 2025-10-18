@@ -518,13 +518,16 @@ function createOrderCardHtml(order) {
                     <button class="btn btn-3d btn-primary" onclick="viewOrderCard(${order.id})" title="Просмотр">
                         <i class="fas fa-eye"></i>
                     </button>
+                    <button class="btn btn-3d btn-warning" onclick="openEstimateModal(${order.id})" title="Работать со сметой">
+                        <i class="fas fa-calculator"></i>
+                    </button>
                     <button class="btn btn-3d btn-info" onclick="sendEstimate(${order.id})" title="Смета отправлена">
                         <i class="fas fa-paper-plane"></i>
                     </button>
                     <button class="btn btn-3d btn-success" onclick="completeOrder(${order.id})" title="Выполнено">
                         <i class="fas fa-check"></i>
                     </button>
-                    <button class="btn btn-3d btn-warning" onclick="declineOrder(${order.id})" title="Отказ">
+                    <button class="btn btn-3d btn-secondary" onclick="declineOrder(${order.id})" title="Отказ">
                         <i class="fas fa-ban"></i>
                     </button>
                     <button class="btn btn-3d btn-danger" onclick="cancelOrder(${order.id})" title="Отмена">
@@ -1088,33 +1091,41 @@ async function loadEstimates() {
     console.log('Загрузка смет');
     
     try {
-        // Загружаем заказы в работе (это и есть сметы)
-        const response = await fetch('/api/orders?status=in_progress');
+        // Загружаем сметы из API
+        const response = await fetch('/api/estimates');
         if (response.ok) {
-            const orders = await response.json();
+            const estimates = await response.json();
             
-            // Отображаем заказы в работе как сметы
+            // Отображаем сметы
             const estimatesTable = document.getElementById('estimatesTable');
             if (estimatesTable) {
                 const tbody = estimatesTable.querySelector('tbody');
                 tbody.innerHTML = '';
                 
-                if (orders.length === 0) {
+                if (estimates.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Сметы не найдены</td></tr>';
                 } else {
-                    orders.forEach(order => {
+                    estimates.forEach(estimate => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${order.order_number}</td>
-                            <td>${order.order_number}</td>
-                            <td>${order.client_name || 'Не указано'}</td>
-                            <td>В разработке</td>
-                            <td><span class="badge bg-info">${getStatusText(order.status)}</span></td>
-                            <td>${new Date(order.created_at).toLocaleDateString('ru-RU')}</td>
+                            <td>${estimate.id}</td>
+                            <td>${estimate.order_number}</td>
+                            <td>${estimate.client_name || 'Не указано'}</td>
+                            <td>${estimate.total_amount.toFixed(2)} ₽</td>
+                            <td><span class="badge bg-${getEstimateStatusColor(estimate.status)}">${getEstimateStatusText(estimate.status)}</span></td>
+                            <td>${new Date(estimate.created_at).toLocaleDateString('ru-RU')}</td>
                             <td>
-                                <button class="btn btn-sm btn-primary" onclick="startWork(${order.id})">
-                                    <i class="fas fa-tools"></i> Работать
-                                </button>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-primary" onclick="openEstimateModal(${estimate.order_id}, ${estimate.id})" title="Редактировать">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-info" onclick="viewEstimateHistory(${estimate.id})" title="История">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                    <button class="btn btn-success" onclick="exportEstimateToPDF(${estimate.id})" title="Экспорт PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </button>
+                                </div>
                             </td>
                         `;
                         tbody.appendChild(row);
@@ -1122,7 +1133,7 @@ async function loadEstimates() {
                 }
             }
             
-            console.log('Сметы загружены:', orders.length);
+            console.log('Сметы загружены:', estimates.length);
         } else {
             console.error('Ошибка загрузки смет');
             showAlert('Ошибка загрузки смет', 'danger');
@@ -1131,6 +1142,37 @@ async function loadEstimates() {
         console.error('Ошибка загрузки смет:', error);
         showAlert('Ошибка соединения с сервером', 'danger');
     }
+}
+
+// Функции для работы со статусами смет
+function getEstimateStatusColor(status) {
+    const colors = {
+        'draft': 'secondary',
+        'approved': 'success',
+        'rejected': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function getEstimateStatusText(status) {
+    const texts = {
+        'draft': 'Черновик',
+        'approved': 'Утверждена',
+        'rejected': 'Отклонена'
+    };
+    return texts[status] || status;
+}
+
+// Функции для работы со сметами
+function viewEstimateHistory(estimateId) {
+    console.log('Просмотр истории сметы:', estimateId);
+    // Открываем модальное окно с историей
+    openEstimateModal(null, estimateId);
+}
+
+function exportEstimateToPDF(estimateId) {
+    console.log('Экспорт сметы в PDF:', estimateId);
+    showAlert('Экспорт в PDF будет реализован', 'info');
 }
 
 function loadAdminData() {
