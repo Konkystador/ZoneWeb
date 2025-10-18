@@ -281,8 +281,13 @@ function setupRoleBasedUI() {
 
 // ==================== УПРАВЛЕНИЕ СТРАНИЦАМИ ====================
 
-function showPage(pageName) {
-    console.log('Переход на страницу:', pageName);
+function     showPage(pageName) {
+        console.log('Переход на страницу:', pageName);
+        
+        // Инициализируем системы при переходе на соответствующие страницы
+        if (pageName === 'analytics' && window.analytics) {
+            window.analytics.showAnalyticsPage();
+        }
     
     // Скрываем все страницы
     document.querySelectorAll('.page').forEach(page => {

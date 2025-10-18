@@ -770,6 +770,250 @@ async function testMobileAdaptation() {
     return success;
 }
 
+// Тест анимаций
+async function testAnimations() {
+    console.log('🔍 Проверка анимаций...');
+    
+    let passed = 0;
+    let total = 0;
+    
+    // Проверка CSS анимаций
+    total++;
+    const animationStyles = document.querySelector('link[href*="animations.css"]');
+    if (animationStyles) {
+        console.log('✅ CSS файл анимаций подключен');
+        passed++;
+    } else {
+        console.log('❌ CSS файл анимаций не подключен');
+    }
+    
+    // Проверка CSS классов анимаций
+    total++;
+    const animationClasses = ['fade-in', 'slideInUp', 'spin', 'slideInRight'];
+    const foundClasses = animationClasses.filter(cls => {
+        const style = document.createElement('div');
+        style.className = cls;
+        return getComputedStyle(style).animationName !== 'none';
+    });
+    
+    if (foundClasses.length > 0) {
+        console.log('✅ Найдены CSS анимации:', foundClasses.length);
+        passed++;
+    } else {
+        console.log('❌ CSS анимации не найдены');
+    }
+    
+    // Проверка переходов
+    total++;
+    const elementsWithTransitions = document.querySelectorAll('*');
+    let hasTransitions = false;
+    
+    for (let i = 0; i < Math.min(elementsWithTransitions.length, 10); i++) {
+        const style = getComputedStyle(elementsWithTransitions[i]);
+        if (style.transition !== 'all 0s ease 0s') {
+            hasTransitions = true;
+            break;
+        }
+    }
+    
+    if (hasTransitions) {
+        console.log('✅ Найдены CSS переходы');
+        passed++;
+    } else {
+        console.log('❌ CSS переходы не найдены');
+    }
+    
+    const success = passed === total;
+    console.log('✅ Анимации:', `Пройдено: ${passed}/${total}`);
+    logTest('Анимации', success, `CSS файл: ${animationStyles ? 'да' : 'нет'}, анимации: ${foundClasses.length}, переходы: ${hasTransitions ? 'да' : 'нет'}`);
+    return success;
+}
+
+// Тест темной темы
+async function testDarkTheme() {
+    console.log('🔍 Проверка темной темы...');
+    
+    let passed = 0;
+    let total = 0;
+    
+    // Проверка CSS файла темной темы
+    total++;
+    const darkThemeStyles = document.querySelector('link[href*="dark-theme.css"]');
+    if (darkThemeStyles) {
+        console.log('✅ CSS файл темной темы подключен');
+        passed++;
+    } else {
+        console.log('❌ CSS файл темной темы не подключен');
+    }
+    
+    // Проверка менеджера тем
+    total++;
+    if (window.themeManager && typeof window.themeManager === 'object') {
+        console.log('✅ Менеджер тем инициализирован');
+        passed++;
+    } else {
+        console.log('❌ Менеджер тем не инициализирован');
+    }
+    
+    // Проверка переключателя темы
+    total++;
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        console.log('✅ Переключатель темы найден');
+        passed++;
+    } else {
+        console.log('❌ Переключатель темы не найден');
+    }
+    
+    // Проверка CSS переменных
+    total++;
+    const rootStyles = getComputedStyle(document.documentElement);
+    const hasCSSVariables = rootStyles.getPropertyValue('--bs-body-bg') !== '';
+    
+    if (hasCSSVariables) {
+        console.log('✅ CSS переменные для тем найдены');
+        passed++;
+    } else {
+        console.log('❌ CSS переменные для тем не найдены');
+    }
+    
+    const success = passed === total;
+    console.log('✅ Темная тема:', `Пройдено: ${passed}/${total}`);
+    logTest('Темная тема', success, `CSS файл: ${darkThemeStyles ? 'да' : 'нет'}, менеджер: ${window.themeManager ? 'да' : 'нет'}, переключатель: ${themeToggle ? 'да' : 'нет'}, переменные: ${hasCSSVariables ? 'да' : 'нет'}`);
+    return success;
+}
+
+// Тест уведомлений
+async function testNotifications() {
+    console.log('🔍 Проверка системы уведомлений...');
+    
+    let passed = 0;
+    let total = 0;
+    
+    // Проверка системы уведомлений
+    total++;
+    if (window.notifications && typeof window.notifications === 'object') {
+        console.log('✅ Система уведомлений инициализирована');
+        passed++;
+    } else {
+        console.log('❌ Система уведомлений не инициализирована');
+    }
+    
+    // Проверка методов уведомлений
+    total++;
+    const notificationMethods = ['show', 'success', 'error', 'warning', 'info', 'loading', 'clear'];
+    const foundMethods = notificationMethods.filter(method => 
+        window.notifications && typeof window.notifications[method] === 'function'
+    );
+    
+    if (foundMethods.length === notificationMethods.length) {
+        console.log('✅ Все методы уведомлений найдены:', foundMethods.length);
+        passed++;
+    } else {
+        console.log('❌ Не все методы уведомлений найдены. Найдено:', foundMethods.length);
+    }
+    
+    // Проверка контейнера уведомлений
+    total++;
+    const container = document.getElementById('notification-container');
+    if (container) {
+        console.log('✅ Контейнер уведомлений найден');
+        passed++;
+    } else {
+        console.log('❌ Контейнер уведомлений не найден');
+    }
+    
+    // Тест показа уведомления
+    total++;
+    try {
+        if (window.notifications) {
+            const testNotification = window.notifications.info('Тестовое уведомление', 1000);
+            if (testNotification) {
+                console.log('✅ Тестовое уведомление показано');
+                passed++;
+            } else {
+                console.log('❌ Не удалось показать тестовое уведомление');
+            }
+        } else {
+            console.log('❌ Система уведомлений недоступна');
+        }
+    } catch (error) {
+        console.log('❌ Ошибка при показе уведомления:', error.message);
+    }
+    
+    const success = passed === total;
+    console.log('✅ Уведомления:', `Пройдено: ${passed}/${total}`);
+    logTest('Уведомления', success, `Система: ${window.notifications ? 'да' : 'нет'}, методы: ${foundMethods.length}/${notificationMethods.length}, контейнер: ${container ? 'да' : 'нет'}`);
+    return success;
+}
+
+// Тест аналитики
+async function testAnalytics() {
+    console.log('🔍 Проверка системы аналитики...');
+    
+    let passed = 0;
+    let total = 0;
+    
+    // Проверка системы аналитики
+    total++;
+    if (window.analytics && typeof window.analytics === 'object') {
+        console.log('✅ Система аналитики инициализирована');
+        passed++;
+    } else {
+        console.log('❌ Система аналитики не инициализирована');
+    }
+    
+    // Проверка методов аналитики
+    total++;
+    const analyticsMethods = ['loadAnalyticsData', 'generateReport', 'exportToExcel', 'exportToCSV', 'showAnalyticsPage'];
+    const foundMethods = analyticsMethods.filter(method => 
+        window.analytics && typeof window.analytics[method] === 'function'
+    );
+    
+    if (foundMethods.length === analyticsMethods.length) {
+        console.log('✅ Все методы аналитики найдены:', foundMethods.length);
+        passed++;
+    } else {
+        console.log('❌ Не все методы аналитики найдены. Найдено:', foundMethods.length);
+    }
+    
+    // Проверка страницы аналитики
+    total++;
+    const analyticsPage = document.getElementById('analyticsPage');
+    if (analyticsPage) {
+        console.log('✅ Страница аналитики найдена');
+        passed++;
+    } else {
+        console.log('❌ Страница аналитики не найдена');
+    }
+    
+    // Проверка элементов графиков
+    total++;
+    const chartElements = ['ordersChart', 'usersChart', 'servicesChart', 'timeChart'];
+    const foundCharts = chartElements.filter(id => document.getElementById(id));
+    
+    if (foundCharts.length === chartElements.length) {
+        console.log('✅ Все элементы графиков найдены:', foundCharts.length);
+        passed++;
+    } else {
+        console.log('❌ Не все элементы графиков найдены. Найдено:', foundCharts.length);
+    }
+    
+    // Проверка Chart.js
+    total++;
+    if (typeof Chart !== 'undefined') {
+        console.log('✅ Chart.js загружен');
+        passed++;
+    } else {
+        console.log('❌ Chart.js не загружен');
+    }
+    
+    const success = passed === total;
+    console.log('✅ Аналитика:', `Пройдено: ${passed}/${total}`);
+    logTest('Аналитика', success, `Система: ${window.analytics ? 'да' : 'нет'}, методы: ${foundMethods.length}/${analyticsMethods.length}, страница: ${analyticsPage ? 'да' : 'нет'}, графики: ${foundCharts.length}/${chartElements.length}, Chart.js: ${typeof Chart !== 'undefined' ? 'да' : 'нет'}`);
+    return success;
+}
+
 // Запуск всех тестов
 async function runAllTests() {
     console.log('🚀 ЗАПУСК ТЕСТОВ ПРИЛОЖЕНИЯ');
@@ -820,7 +1064,11 @@ async function runAllTests() {
         testResponsiveness,
         testEstimatesSystem,
         testEstimateModal,
-        testMobileAdaptation
+        testMobileAdaptation,
+        testAnimations,
+        testDarkTheme,
+        testNotifications,
+        testAnalytics
     ];
     
     for (let i = 0; i < tests.length; i++) {

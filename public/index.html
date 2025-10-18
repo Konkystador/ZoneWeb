@@ -7,6 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/animations.css" rel="stylesheet">
+    <link href="css/dark-theme.css" rel="stylesheet">
 </head>
 <body>
     <!-- Login Screen -->
@@ -103,6 +105,11 @@
                     <span class="navbar-text">
                         <i class="fas fa-user"></i> <span id="userName"></span>
                     </span>
+                    <div class="nav-item">
+                        <a class="nav-link" href="#" data-page="analytics">
+                            <i class="fas fa-chart-line"></i> Аналитика
+                        </a>
+                    </div>
                     <div class="nav-item">
                         <a class="nav-link" href="#" data-page="testing">
                             <i class="fas fa-vial"></i> Тесты
@@ -1113,6 +1120,184 @@
         </div>
     </div>
 
+    <!-- Страница аналитики -->
+    <div id="analyticsPage" class="page" style="display: none;">
+        <div class="container-fluid">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#" data-page="dashboard">Главная</a></li>
+                    <li class="breadcrumb-item active">Аналитика</li>
+                </ol>
+            </nav>
+            
+            <!-- Заголовок страницы -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2><i class="fas fa-chart-line"></i> Аналитика и отчеты</h2>
+                    <p class="text-muted">Статистика работы, графики и детальные отчеты</p>
+                </div>
+            </div>
+
+            <!-- Фильтры -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-filter"></i> Фильтры</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Период</label>
+                                    <select class="form-select" id="analyticsPeriod">
+                                        <option value="7">Последние 7 дней</option>
+                                        <option value="30" selected>Последние 30 дней</option>
+                                        <option value="90">Последние 90 дней</option>
+                                        <option value="365">Последний год</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Исполнитель</label>
+                                    <select class="form-select" id="analyticsUser">
+                                        <option value="">Все исполнители</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Статус заказа</label>
+                                    <select class="form-select" id="analyticsStatus">
+                                        <option value="">Все статусы</option>
+                                        <option value="pending">Новые</option>
+                                        <option value="in_progress">В работе</option>
+                                        <option value="completed">Выполнены</option>
+                                        <option value="declined">Отклонены</option>
+                                        <option value="cancelled">Отменены</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button class="btn btn-primary w-100" onclick="loadAnalyticsData()">
+                                        <i class="fas fa-refresh"></i> Обновить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Графики -->
+            <div class="row mb-4">
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Заказы по статусам</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="ordersChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-users"></i> Работа пользователей</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="usersChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Популярные услуги</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="servicesChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-line"></i> Динамика заказов</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="timeChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Отчеты -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-file-alt"></i> Отчеты</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <button class="btn btn-success w-100" onclick="generateReport('orders')">
+                                        <i class="fas fa-file-excel"></i> Отчет по заказам
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-info w-100" onclick="generateReport('users')">
+                                        <i class="fas fa-file-excel"></i> Отчет по пользователям
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-warning w-100" onclick="generateReport('services')">
+                                        <i class="fas fa-file-excel"></i> Отчет по услугам
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-primary w-100" onclick="generateReport('financial')">
+                                        <i class="fas fa-file-excel"></i> Финансовый отчет
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Детальная таблица -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-table"></i> Детальная статистика</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="analyticsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Исполнитель</th>
+                                            <th>Заказов выполнено</th>
+                                            <th>Среднее время</th>
+                                            <th>Рейтинг</th>
+                                            <th>Последняя активность</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Данные загружаются динамически -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- New Order Modal -->
     <div class="modal fade modal-3d" id="newOrderModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -1691,6 +1876,9 @@
     <script src="js/estimate.js?v=6"></script>
     <script src="js/pdf-export.js?v=6"></script>
     <script src="js/estimate-modal.js?v=1"></script>
+    <script src="js/notifications.js?v=1"></script>
+    <script src="js/theme-manager.js?v=1"></script>
+    <script src="js/analytics.js?v=1"></script>
     
     <!-- Тесты приложения -->
     <script src="js/app-tests.js?v=1"></script>
