@@ -577,6 +577,199 @@ function testResponsiveness() {
     }
 }
 
+// Тест системы смет
+async function testEstimatesSystem() {
+    console.log('🔍 Проверка системы смет...');
+    
+    let passed = 0;
+    let total = 0;
+    
+    // Проверка API смет
+    total++;
+    try {
+        const response = await fetch('/api/estimates');
+        if (response.ok) {
+            const estimates = await response.json();
+            console.log('✅ API смет работает, получено смет:', estimates.length);
+            passed++;
+        } else {
+            console.log('❌ API смет не отвечает');
+        }
+    } catch (error) {
+        console.log('❌ Ошибка API смет:', error.message);
+    }
+    
+    // Проверка API услуг
+    total++;
+    try {
+        const response = await fetch('/api/services');
+        if (response.ok) {
+            const services = await response.json();
+            console.log('✅ API услуг работает, получено услуг:', services.length);
+            passed++;
+        } else {
+            console.log('❌ API услуг не отвечает');
+        }
+    } catch (error) {
+        console.log('❌ Ошибка API услуг:', error.message);
+    }
+    
+    // Проверка глобальных функций смет
+    total++;
+    const estimateFunctions = ['openEstimateModal', 'addEstimateItem', 'saveEstimate', 'exportEstimateToPDF'];
+    const foundFunctions = estimateFunctions.filter(func => typeof window[func] === 'function');
+    
+    if (foundFunctions.length === estimateFunctions.length) {
+        console.log('✅ Все функции смет найдены:', foundFunctions);
+        passed++;
+    } else {
+        console.log('❌ Не все функции смет найдены. Найдено:', foundFunctions);
+    }
+    
+    const success = passed === total;
+    console.log('✅ Система смет:', `Пройдено: ${passed}/${total}`);
+    logTest('Система смет', success, `API: ${passed >= 2 ? 'да' : 'нет'}, функции: ${foundFunctions.length}/${estimateFunctions.length}`);
+    return success;
+}
+
+// Тест модального окна смет
+async function testEstimateModal() {
+    console.log('🔍 Проверка модального окна смет...');
+    
+    let passed = 0;
+    let total = 0;
+    
+    // Проверка существования модального окна
+    total++;
+    const modal = document.getElementById('estimateModal');
+    if (modal) {
+        console.log('✅ Модальное окно смет найдено');
+        passed++;
+    } else {
+        console.log('❌ Модальное окно смет не найдено');
+    }
+    
+    // Проверка элементов модального окна
+    const requiredElements = [
+        'estimateModalTitle',
+        'estimateOrderNumber',
+        'estimateClientName',
+        'estimateClientPhone',
+        'estimateClientAddress',
+        'estimateProblem',
+        'estimateItemsTable',
+        'estimateItemsBody',
+        'estimateTotalAmount',
+        'estimateNotes',
+        'estimateSaveBtn'
+    ];
+    
+    total++;
+    const foundElements = requiredElements.filter(id => document.getElementById(id));
+    
+    if (foundElements.length === requiredElements.length) {
+        console.log('✅ Все элементы модального окна найдены:', foundElements.length);
+        passed++;
+    } else {
+        console.log('❌ Не все элементы найдены. Найдено:', foundElements.length, 'из', requiredElements.length);
+        console.log('❌ Отсутствуют:', requiredElements.filter(id => !document.getElementById(id)));
+    }
+    
+    // Проверка Bootstrap модального окна
+    total++;
+    if (modal && modal.classList.contains('modal') && modal.classList.contains('fade')) {
+        console.log('✅ Модальное окно имеет правильные Bootstrap классы');
+        passed++;
+    } else {
+        console.log('❌ Модальное окно не имеет правильных Bootstrap классов');
+    }
+    
+    const success = passed === total;
+    console.log('✅ Модальное окно смет:', `Пройдено: ${passed}/${total}`);
+    logTest('Модальное окно смет', success, `Элементы: ${foundElements.length}/${requiredElements.length}, Bootstrap: ${modal && modal.classList.contains('modal') ? 'да' : 'нет'}`);
+    return success;
+}
+
+// Тест мобильной адаптации
+async function testMobileAdaptation() {
+    console.log('🔍 Проверка мобильной адаптации...');
+    
+    let passed = 0;
+    let total = 0;
+    
+    // Проверка медиа-запросов
+    total++;
+    const styles = document.styleSheets;
+    let hasMobileMediaQueries = false;
+    
+    for (let i = 0; i < styles.length; i++) {
+        try {
+            const rules = styles[i].cssRules || styles[i].rules;
+            for (let j = 0; j < rules.length; j++) {
+                if (rules[j].type === CSSRule.MEDIA_RULE) {
+                    const mediaText = rules[j].media.mediaText;
+                    if (mediaText.includes('max-width: 768px') || mediaText.includes('max-width: 576px')) {
+                        hasMobileMediaQueries = true;
+                        break;
+                    }
+                }
+            }
+        } catch (e) {
+            // Игнорируем ошибки CORS
+        }
+    }
+    
+    if (hasMobileMediaQueries) {
+        console.log('✅ Найдены медиа-запросы для мобильных устройств');
+        passed++;
+    } else {
+        console.log('❌ Медиа-запросы для мобильных устройств не найдены');
+    }
+    
+    // Проверка viewport meta tag
+    total++;
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        console.log('✅ Viewport meta tag найден:', viewport.content);
+        passed++;
+    } else {
+        console.log('❌ Viewport meta tag не найден');
+    }
+    
+    // Проверка адаптивных классов Bootstrap
+    total++;
+    const responsiveElements = document.querySelectorAll('.col-12, .col-sm-6, .col-md-3, .col-lg-4');
+    if (responsiveElements.length > 0) {
+        console.log('✅ Найдены адаптивные Bootstrap классы:', responsiveElements.length);
+        passed++;
+    } else {
+        console.log('❌ Адаптивные Bootstrap классы не найдены');
+    }
+    
+    // Проверка модальных окон на адаптивность
+    total++;
+    const modals = document.querySelectorAll('.modal-dialog');
+    let hasResponsiveModals = false;
+    
+    modals.forEach(modal => {
+        if (modal.classList.contains('modal-xl') || modal.classList.contains('modal-lg')) {
+            hasResponsiveModals = true;
+        }
+    });
+    
+    if (hasResponsiveModals) {
+        console.log('✅ Найдены адаптивные модальные окна');
+        passed++;
+    } else {
+        console.log('❌ Адаптивные модальные окна не найдены');
+    }
+    
+    const success = passed === total;
+    console.log('✅ Мобильная адаптация:', `Пройдено: ${passed}/${total}`);
+    logTest('Мобильная адаптация', success, `Медиа-запросы: ${hasMobileMediaQueries ? 'да' : 'нет'}, viewport: ${viewport ? 'да' : 'нет'}, Bootstrap: ${responsiveElements.length > 0 ? 'да' : 'нет'}, модальные: ${hasResponsiveModals ? 'да' : 'нет'}`);
+    return success;
+}
+
 // Запуск всех тестов
 async function runAllTests() {
     console.log('🚀 ЗАПУСК ТЕСТОВ ПРИЛОЖЕНИЯ');
@@ -624,7 +817,10 @@ async function runAllTests() {
         testAPI,
         testPerformance,
         test3DEffects,
-        testResponsiveness
+        testResponsiveness,
+        testEstimatesSystem,
+        testEstimateModal,
+        testMobileAdaptation
     ];
     
     for (let i = 0; i < tests.length; i++) {

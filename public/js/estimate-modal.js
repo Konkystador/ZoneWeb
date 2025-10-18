@@ -13,6 +13,13 @@ function initEstimateModal() {
 // Load services for estimate items
 async function loadServices() {
     try {
+        // Проверяем авторизацию перед загрузкой услуг
+        const authResponse = await fetch('/api/auth/check');
+        if (!authResponse.ok) {
+            console.log('⚠️ Пользователь не авторизован, пропускаем загрузку услуг');
+            return;
+        }
+        
         const response = await fetch('/api/services');
         if (response.ok) {
             services = await response.json();
@@ -28,6 +35,9 @@ async function loadServices() {
 // Open estimate modal for creating new estimate
 function openEstimateModal(orderId) {
     console.log('🔧 Открытие модального окна сметы для заказа:', orderId);
+    
+    // Перезагружаем услуги при открытии модального окна
+    loadServices();
     
     // Reset modal
     currentEstimate = null;

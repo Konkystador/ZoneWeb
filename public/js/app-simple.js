@@ -48,7 +48,7 @@ class WindowRepairApp {
         document.getElementById('userName').textContent = this.currentUser.full_name || this.currentUser.username;
         
         // После входа сразу показываем активные заказы
-        this.showPage('orders');
+        showPage('orders');
     }
 
     setupRoleBasedUI() {
